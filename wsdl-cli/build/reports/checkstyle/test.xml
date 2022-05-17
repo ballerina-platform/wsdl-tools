@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="8.16">
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/test/java/io/ballerina/wsdl/cmd/GraphqlCmdTest.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/test/java/io/ballerina/wsdl/common/GraphqlTest.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/test/java/io/ballerina/wsdl/common/TestUtils.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/test/java/io/ballerina/wsdl/generator/CodeGeneratorTest.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/test/java/io/ballerina/wsdl/generator/ballerina/ClientGeneratorTest.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/test/java/io/ballerina/wsdl/generator/ballerina/TypesGeneratorTest.java">
+</file>
+</checkstyle>
