@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="8.16">
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/cmd/Constants.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/cmd/DiagnosticMessages.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/cmd/GraphqlDiagnostic.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/cmd/Utils.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/cmd/WSDLCmd.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/exception/ClientGenerationException.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/exception/CmdException.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/exception/GenerationException.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/exception/IntospectionException.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/exception/TypesGenerationException.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/CodeGenerator.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/CodeGeneratorConstants.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/CodeGeneratorUtils.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/ballerina/ClientGenerator.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/ballerina/FunctionBodyGenerator.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/ballerina/FunctionSignatureGenerator.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/ballerina/TypesGenerator.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/model/AuthConfig.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/model/FieldType.java">
+</file>
+<file name="/Users/lakshan/Documents/Ballerina/wsdl-tool-impl/wsdl-cli/src/main/java/io/ballerina/wsdl/generator/model/SrcFilePojo.java">
+</file>
+</checkstyle>
