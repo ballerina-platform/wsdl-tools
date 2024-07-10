@@ -1,0 +1,14 @@
+[tool]
+id = "wsdl"
+
+[[dependency]]
+path = "resources/wsdl-cli-@toml.version@.jar"
+
+[[dependency]]
+path = "resources/wsdl-core-@toml.version@.jar"
+
+[[dependency]]
+path = "resources/wsdl4j-1.6.3.jar"
+
+[[dependency]]
+path = "resources/XmlSchema-1.4.7.jar"

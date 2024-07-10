@@ -1,0 +1,8 @@
+[package]
+org = "ballerina"
+name = "wsdltool"
+version = "@toml.version@"
+authors = ["Ballerina"]
+keywords = ["wsdl"]
+license = ["Apache-2.0"]
+distribution = "2201.9.1"
