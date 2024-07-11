@@ -17,26 +17,10 @@
  */
 
 plugins {
-    id "com.github.spotbugs-base"
-    id "com.github.johnrengelman.shadow"
-    id "de.undercouch.download"
-    id "net.researchgate.release"
-}
-
-ext.ballerinaLangVersion = project.ballerinaLangVersion
-
-def stripBallerinaExtensionVersion(String extVersion) {
-    if (extVersion.matches(project.ext.timestampedVersionRegex)) {
-        def splitVersion = extVersion.split('-')
-        if (splitVersion.length > 3) {
-            def strippedValues = splitVersion[0..-4]
-            return strippedValues.join('-')
-        } else {
-            return extVersion
-        }
-    } else {
-        return extVersion.replace("${project.ext.snapshotVersion}", "")
-    }
+    id "com.github.spotbugs-base" version "${spotbugsPluginVersion}"
+    id "com.github.johnrengelman.shadow" version "${shadowJarPluginVersion}"
+    id "de.undercouch.download" version "${downloadPluginVersion}"
+    id "net.researchgate.release" version "${releasePluginVersion}"
 }
 
 allprojects {
@@ -82,32 +66,29 @@ allprojects {
     }
 }
 
-subprojects {
-
-    configurations {
-        ballerinaStdLibs
-    }
-
-    dependencies {
-        /* Standard libraries */
-        ballerinaStdLibs "io.ballerina.stdlib:io-ballerina:${project.stdlibIoVersion}"
-    }
-}
-
 def moduleVersion = project.version.replace("-SNAPSHOT", "")
 
-task build {
-    dependsOn ":module-ballerina-wsdl:build"
-}
-
 release {
+    failOnPublishNeeded = false
     failOnSnapshotDependencies = true
+
+    buildTasks = ['build']
     versionPropertyFile = 'gradle.properties'
-    tagTemplate = 'v${version}'
-//    git {
-//        requireBranch = "release-${moduleVersion}"
-//        pushToRemote = 'origin'
-//    }
+    tagTemplate = 'v$version'
+
+    git {
+        requireBranch = "release-${moduleVersion}"
+        pushToRemote = 'origin'
+    }
 }
 
-publish.dependsOn ":module-ballerina-wsdl:publish"
+tasks.register('clean') {
+    dependsOn(":module-ballerina-wsdl:clean")
+}
+
+tasks.register('build') {
+    dependsOn(":module-ballerina-wsdl:build")
+}
+
+//publishToMavenLocal.dependsOn build
+//publish.dependsOn build

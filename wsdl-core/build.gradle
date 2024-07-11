@@ -16,22 +16,11 @@
  *  under the License.
  */
 
-//apply from: "$rootDir/gradle/javaProject.gradle"
-apply plugin: "com.github.johnrengelman.shadow"
-apply plugin: "java-library"
-
-description = "Ballerina - WSDL Tool"
-
-configurations.all {
-    resolutionStrategy.preferProjectModules()
+plugins {
+    id 'java'
 }
 
-configurations {
-    balTools
-    dist {
-        transitive true
-    }
-}
+description = "Ballerina - WSDL-Tools Core"
 
 dependencies {
     implementation "org.ballerinalang:ballerina-lang:${ballerinaLangVersion}"
@@ -41,102 +30,8 @@ dependencies {
     implementation "org.ballerinalang:ballerina-tools-api:${ballerinaLangVersion}"
     implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
 
-    implementation "wsdl4j:wsdl4j:${project.wsdl4jVersion}"
-    implementation "org.apache.ws.commons.schema:XmlSchema:${project.apacheXmlSchemaVersion}"
-
-    balTools ("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
-        transitive = false
-    }
-}
-
-def bDistribution = file("$project.buildDir/extracted-distribution/jballerina-tools-${ballerinaLangVersion}")
-task jBallerinaPack {
-    doLast {
-        configurations.balTools.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-            copy {
-                from project.zipTree(artifact.getFile())
-                into new File(project.buildDir, "extracted-distribution/")
-            }
-        }
-    }
-    outputs.dir bDistribution
-}
-
-task unpackStdLibs() {
-    dependsOn(jBallerinaPack)
-    doLast {
-        configurations.ballerinaStdLibs.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-            copy {
-                from project.zipTree(artifact.getFile())
-                into new File("${project.buildDir}/extracted-distribution/" + artifact.name + "-zip")
-            }
-        }
-    }
-}
-
-task copyStdlibs(type: Copy) {
-    dependsOn(unpackStdLibs)
-    def ballerinaDist = "$project.buildDir/extracted-distribution/jballerina-tools-${ballerinaLangVersion}"
-    into ballerinaDist
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    /* Standard Libraries */
-    configurations.ballerinaStdLibs.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-        def artifactExtractedPath = "${project.buildDir}/extracted-distribution/" + artifact.name + "-zip"
-        into("repo/bala") {
-            from "${artifactExtractedPath}/bala/"
-        }
-        into("repo/cache") {
-            from "${artifactExtractedPath}/cache"
-        }
-    }
-}
-
-test {
-    dependsOn {
-        copyStdlibs
-    }
-    systemProperty "ballerina.home", bDistribution
-
-    useTestNG() {
-        suites "src/test/resources/testng.xml"
-    }
-}
-
-//shadowJar {
-//    configurations = [project.configurations.runtimeClasspath]
-//    dependencies {
-//        include(dependency('wsdl4j:wsdl4j'))
-//        exclude('META-INF/*.SF')
-//        exclude('META-INF/*.DSA')
-//        exclude('META-INF/*.RSA')
-//    }
-//}
-
-//task copyWsdlToolsJar {
-//    doLast {
-//        copy {
-//            from "build/libs/wsdl-core-0.1.0-SNAPSHOT.jar"
-//            into "../wsdl-cli/src/main/resources"
-//            include "*.jar"
-//        }
-//        println "Copying wsdl-tools jar to resources folder"
-//    }
-//}
-
-jar {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    dependsOn configurations.dist
-    from { configurations.dist.collect { it.isDirectory() ? it : zipTree(it) } } {
-        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-    }
-}
-
-task copyDependencyJars(type: Copy) {
-    from configurations.runtimeClasspath
-    into "$buildDir/libs"
-    include "wsdl4j-*.jar"
-    include "XmlSchema-*.jar"
+    implementation "wsdl4j:wsdl4j:${wsdl4jVersion}"
+    implementation "org.apache.ws.commons.schema:XmlSchema:${apacheXmlSchemaVersion}"
 }
 
 compileJava {
@@ -147,5 +42,3 @@ compileJava {
         classpath = files()
     }
 }
-
-build.dependsOn copyDependencyJars

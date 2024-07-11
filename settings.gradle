@@ -16,27 +16,21 @@
  *  under the License.
  */
 
-pluginManagement {
-    plugins {
-        id "com.github.spotbugs-base" version "${spotbugsPluginVersion}"
-        id "com.github.johnrengelman.shadow" version "${shadowJarPluginVersion}"
-        id "de.undercouch.download" version "${downloadPluginVersion}"
-        id "net.researchgate.release" version "${releasePluginVersion}"
-    }
-}
-
 plugins {
     id "com.gradle.enterprise" version "3.13.2"
 }
 
-rootProject.name = 'wsdl-tool'
+rootProject.name = 'wsdl-tools'
 
 include ':checkstyle'
-include 'module-ballerina-wsdl'
-include 'wsdl-cli'
-include 'wsdl-core'
+include ':module-ballerina-wsdl'
+include ':wsdl-cli'
+include ':wsdl-core'
 
 project(':checkstyle').projectDir = file("build-config${File.separator}checkstyle")
+project(':module-ballerina-wsdl').projectDir = file('module-ballerina-wsdl')
+project(':wsdl-cli').projectDir = file('wsdl-cli')
+project(':wsdl-core').projectDir = file('wsdl-core')
 
 gradleEnterprise {
     buildScan {
