@@ -35,26 +35,30 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
 
+import static io.ballerina.wsdl.cli.Messages.MISSING_WSDL_PATH;
+
+/**
+ * The {@code WSDLCmd} class provides a command-line utility to generate Ballerina source code
+ * from a given WSDL file. It uses the provided WSDL path and optional operation names to generate
+ * the corresponding Ballerina code.
+ *
+ * @since 2201.9.0
+ */
 @CommandLine.Command(
         name = "wsdl",
         description = "Generate the Ballerina sources for a given WSDL definition."
 )
 public class WSDLCmd implements BLauncherCmd {
     private static final String CMD_NAME = "wsdl";
-    private PrintStream outStream;
-    private boolean exitWhenFinish;
+    private final PrintStream outStream;
+    private final boolean exitWhenFinish;
 
-    @CommandLine.Option(names = {"-i", "--input"}, description = "WSDL relative file path")
-    public String inputPath;
+    @CommandLine.Option(names = {"-i", "--input"}, description = "Relative path to the WSDL file")
+    private String inputPath;
 
-    @CommandLine.Option(
-            names = {"--operations"},
-            description = "Comma separated operation names that need to be generated"
-    )
-    public String operations;
+    @CommandLine.Option(names = {"--operations"}, description = "Comma-separated operation names to generate")
+    private String operations;
 
     public WSDLCmd() {
         this.outStream = System.err;
@@ -64,27 +68,21 @@ public class WSDLCmd implements BLauncherCmd {
     @Override
     public void execute() {
         if (inputPath == null || inputPath.isBlank()) {
-            outStream.println(ErrorMessages.MISSING_WSDL_PATH);
-            exitError(this.exitWhenFinish);
+            outStream.println(MISSING_WSDL_PATH);
+            exitOnError();
             return;
         }
-        String fileName = inputPath;
-        List<String> operation = new ArrayList<>();
-        if (operations != null) {
-            String[] ids = operations.split(",");
-            List<String> normalizedOperationIds = Arrays.stream(ids).toList();
-            operation.addAll(normalizedOperationIds);
+
+        List<String> operationList = new ArrayList<>();
+        if (operations != null && !operations.isBlank()) {
+            operationList.addAll(Arrays.asList(operations.split(",")));
         }
 
         try {
-            wsdlToBallerina(fileName, operation);
+            wsdlToBallerina(inputPath, operationList);
         } catch (IOException e) {
-            outStream.println(e.getLocalizedMessage());
-            exitError(this.exitWhenFinish);
-        }
-
-        if (this.exitWhenFinish) {
-            Runtime.getRuntime().exit(0);
+            outStream.println("Error: " + e.getLocalizedMessage());
+            exitOnError();
         }
     }
 
@@ -108,35 +106,50 @@ public class WSDLCmd implements BLauncherCmd {
 
     }
 
+    /**
+     * Converts a WSDL file into Ballerina source files based on the specified operations.
+     *
+     * @param fileName   the path to the WSDL file
+     * @param operations a list of operation names to be generated
+     * @throws IOException if reading or writing files fails
+     */
     private void wsdlToBallerina(String fileName, List<String> operations) throws IOException {
-        final File wsdlFile = new File(fileName);
-
+        File wsdlFile = new File(fileName);
         Path wsdlFilePath = Paths.get(wsdlFile.getCanonicalPath());
         String fileContent = Files.readString(wsdlFilePath);
 
         WSDLToBallerina wsdlToBallerina = new WSDLToBallerina();
-        WSDLToBallerinaResponse wsdlToBallerinaResponse = wsdlToBallerina.generateFromWSDL(fileContent, operations);
+        WSDLToBallerinaResponse response = wsdlToBallerina.generateFromWSDL(fileContent, operations);
 
-        GeneratedSourceFile generatedTypes = wsdlToBallerinaResponse.getTypesSource();
+        writeFile(response.getTypesSource());
+    }
 
-        File typesFile = new File(generatedTypes.getFileName());
-        Path typesFilePath = Paths.get(typesFile.getCanonicalPath());
+    /**
+     * Writes the generated content to a file, with confirmation for overwriting if the file already exists.
+     *
+     * @param sourceFile generated source file details
+     * @throws IOException if file writing fails
+     */
+    private void writeFile(GeneratedSourceFile sourceFile) throws IOException {
+        File file = new File(sourceFile.getFileName());
+        Path filePath = Paths.get(file.getCanonicalPath());
 
-        if (typesFile.exists()) {
-            String userInput = System.console().readLine("There is already a/an " + typesFile.getName() +
-                    " in the location. Do you want to override the file? [y/N] ");
-            if (!Objects.equals(userInput.toLowerCase(Locale.ENGLISH), "y")) {
-                outStream.println("Not overwriting the file.");
+        if (file.exists()) {
+            String userInput = System.console().readLine(String.format("The file '%s' already exists." +
+                    " Overwrite? [y/N]: ", sourceFile.getFileName()));
+            if (!"y".equalsIgnoreCase(userInput.trim())) {
+                outStream.println("Action canceled: No changes have been made.");
                 return;
             }
         }
-        try (FileWriter writer = new FileWriter(typesFilePath.toString(), StandardCharsets.UTF_8)) {
-            writer.write(generatedTypes.getContent());
+
+        try (FileWriter writer = new FileWriter(filePath.toFile(), StandardCharsets.UTF_8)) {
+            writer.write(sourceFile.getContent());
         }
     }
 
-    private static void exitError(boolean exit) {
-        if (exit) {
+    private void exitOnError() {
+        if (exitWhenFinish) {
             Runtime.getRuntime().exit(1);
         }
     }
