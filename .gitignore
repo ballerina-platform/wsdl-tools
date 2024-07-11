@@ -31,3 +31,7 @@ gradle-app.setting
 
 ### Mac OS ###
 .DS_Store
+
+### Generated Files ###
+target/
+lib/
