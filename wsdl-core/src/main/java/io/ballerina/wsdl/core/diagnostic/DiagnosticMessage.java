@@ -22,6 +22,12 @@ import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 
 import java.util.Objects;
 
+/**
+ * Encapsulates information about a diagnostic message, its code, description, severity, and additional arguments.
+ * This class is used to represent errors and warnings generated during WSDL to Ballerina conversions.
+ *
+ * @since 0.1.0
+ */
 public class DiagnosticMessage {
 
     private final String code;

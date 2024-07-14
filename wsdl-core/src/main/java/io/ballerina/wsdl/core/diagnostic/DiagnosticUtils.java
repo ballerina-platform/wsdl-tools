@@ -18,19 +18,25 @@
 
 package io.ballerina.wsdl.core.diagnostic;
 
-import io.ballerina.wsdl.core.WSDLToBallerinaResponse;
+import io.ballerina.wsdl.core.WsdlToBallerinaResponse;
 
 import java.util.List;
 
+/**
+ * Utility class for diagnostic operations related to the WSDL to Ballerina conversion process.
+ * This class provides methods to integrate diagnostic messages into response structures.
+ *
+ * @since 0.1.0
+ */
 public class DiagnosticUtils {
 
     private DiagnosticUtils() {}
 
-    public static WSDLToBallerinaResponse getDiagnosticResponse(List<DiagnosticMessage> diagnosticMessages,
-                                                                WSDLToBallerinaResponse response) {
-        List<WSDLToBallerinaDiagnostic> diagnostics = response.getDiagnostics();
+    public static WsdlToBallerinaResponse getDiagnosticResponse(List<DiagnosticMessage> diagnosticMessages,
+                                                                WsdlToBallerinaResponse response) {
+        List<WsdlToBallerinaDiagnostic> diagnostics = response.getDiagnostics();
         for (DiagnosticMessage message : diagnosticMessages) {
-            WSDLToBallerinaDiagnostic diagnostic = new WSDLToBallerinaDiagnostic(
+            WsdlToBallerinaDiagnostic diagnostic = new WsdlToBallerinaDiagnostic(
                     message.getCode(), message.getDescription(), message.getSeverity(), null, message.getArgs());
             diagnostics.add(diagnostic);
         }
