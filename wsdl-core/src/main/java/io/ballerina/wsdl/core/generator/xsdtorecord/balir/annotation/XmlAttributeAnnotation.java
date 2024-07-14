@@ -16,15 +16,13 @@
  *  under the License.
  */
 
-package io.ballerina.wsdl.cli;
+package io.ballerina.wsdl.core.generator.xsdtorecord.balir.annotation;
 
 /**
- * Contains static message constants for user notifications and error handling in the application.
+ * Represents an XML Attribute annotation in a Ballerina field.
  *
  * @since 0.1.0
  */
-public class Messages {
-    public static final String MISSING_WSDL_PATH = "Error: Missing input WSDL file path. " +
-            "Please specify the path using the --input option.\n" +
-            "Example: bal wsdl --input <path_to_wsdl_file>";
+public class XmlAttributeAnnotation implements FieldAnnotation {
+
 }
