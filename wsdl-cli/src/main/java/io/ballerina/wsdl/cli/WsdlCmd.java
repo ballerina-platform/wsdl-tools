@@ -59,6 +59,9 @@ public class WsdlCmd implements BLauncherCmd {
     @CommandLine.Option(names = {"--operations"}, description = "Comma-separated operation names to generate")
     private String operations;
 
+    @CommandLine.Option(names = {"--help", "-h"}, hidden = true)
+    private boolean helpFlag;
+
     public WsdlCmd() {
         this.outStream = System.err;
         this.exitWhenFinish = true;
@@ -92,7 +95,8 @@ public class WsdlCmd implements BLauncherCmd {
 
     @Override
     public void printLongDesc(StringBuilder out) {
-
+        out.append("Generate client stubs and records from a WSDL file").append(System.lineSeparator());
+        out.append(System.lineSeparator());
     }
 
     @Override
