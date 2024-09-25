@@ -11,13 +11,11 @@ The `wsdl` command in Ballerina is used for WSDL to Ballerina code generations. 
 
 ### WSDL to Ballerina
 
-#### Generate Client Stubs from an WSDL Specifications
+Generates Ballerina client stubs and records for a given WSDL file.
 
 ```bash
 bal wsdl -i <FILE_NAME> [--operations <COMMA_SEPARATED_OPERATION_NAMES>]
 ```
-
-Generates Ballerina client stubs for a given WSDL file.
 
 `-i, --input <FILE_NAME>`: The input WSDL file from which Ballerina types are to be generated is specified by this required parameter.
 
@@ -25,7 +23,7 @@ Generates Ballerina client stubs for a given WSDL file.
 
 ### Samples for WSDL Commands
 
-#### Generate Client Stub and Records from WSDL
+The following is a sample command to generate client stubs and records from a WSDL file.
 
 ```bash
     bal wsdl -i calculator.wsdl --operations add, subtract, divide, multiply
@@ -34,7 +32,7 @@ Generates Ballerina client stubs for a given WSDL file.
 This will generate a Ballerina client stub and records for the `calculator.wsdl` file. The above command can be run from within anywhere on the execution path.
 It is not mandatory to run it from inside the Ballerina project.
 
-Output:
+**Output:**
 
 ```bash
 The service generation process is complete. The following files were created.
