@@ -50,14 +50,16 @@ import static io.ballerina.wsdl.cli.Messages.MISSING_WSDL_PATH;
 )
 public class WsdlCmd implements BLauncherCmd {
     private static final String CMD_NAME = "wsdl";
+    private static final String COMMAND_IDENTIFIER = "ballerina-wsdl";
     private final PrintStream outStream;
     private final boolean exitWhenFinish;
 
     @CommandLine.Option(names = {"-i", "--input"}, description = "Relative path to the WSDL file")
     private String inputPath;
 
-    @CommandLine.Option(names = {"--operations"}, description = "Comma-separated operation names to generate")
-    private String operations;
+    @CommandLine.Option(names = {"--operations"},
+                        description = "Comma-separated operation names to generate", split = ",")
+    private String[] operations;
 
     @CommandLine.Option(names = {"--help", "-h"}, hidden = true)
     private boolean helpFlag;
@@ -69,21 +71,25 @@ public class WsdlCmd implements BLauncherCmd {
 
     @Override
     public void execute() {
+        if (helpFlag) {
+            String commandUsageInfo = BLauncherCmd.getCommandUsageInfo(COMMAND_IDENTIFIER);
+            outStream.println(commandUsageInfo);
+            return;
+        }
         if (inputPath == null || inputPath.isBlank()) {
             outStream.println(MISSING_WSDL_PATH);
             exitOnError();
             return;
         }
-
         List<String> operationList = new ArrayList<>();
-        if (operations != null && !operations.isBlank()) {
-            operationList.addAll(Arrays.asList(operations.split(",")));
+        if (operations != null && operations.length > 0) {
+            operationList.addAll(Arrays.asList(operations));
         }
 
         try {
             wsdlToBallerina(inputPath, operationList);
         } catch (IOException e) {
-            outStream.println("Error: " + e.getLocalizedMessage());
+            outStream.println("Error occurred while generating client and types from WSDL" + e.getLocalizedMessage());
             exitOnError();
         }
     }
@@ -143,6 +149,8 @@ public class WsdlCmd implements BLauncherCmd {
             if (!"y".equalsIgnoreCase(userInput.trim())) {
                 outStream.println("Action canceled: No changes have been made.");
                 return;
+            } else {
+                outStream.println("File " + sourceFile.fileName() + " has been overwritten.");
             }
         }
 
