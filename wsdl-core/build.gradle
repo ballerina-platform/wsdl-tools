@@ -20,7 +20,7 @@ plugins {
     id 'java'
 }
 
-description = "Ballerina - WSDL-Tools Core"
+description = "Ballerina - WSDL Tool Core"
 
 dependencies {
     implementation "org.ballerinalang:ballerina-lang:${ballerinaLangVersion}"

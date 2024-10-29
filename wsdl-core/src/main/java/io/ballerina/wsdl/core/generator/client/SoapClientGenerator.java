@@ -76,9 +76,7 @@ import static io.ballerina.compiler.syntax.tree.NodeFactory.createSimpleNameRefe
  * @since 0.1.0
  */
 public class SoapClientGenerator {
-
     private final WsdlService wsdlService;
-
     protected SoapClientGenerator(WsdlService wsdlService) {
         this.wsdlService = wsdlService;
     }

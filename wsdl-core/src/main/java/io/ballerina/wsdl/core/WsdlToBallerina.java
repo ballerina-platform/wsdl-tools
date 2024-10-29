@@ -91,7 +91,6 @@ public class WsdlToBallerina {
             WSDLReader reader = WSDLFactory.newInstance().newWSDLReader();
             reader.setFeature("javax.wsdl.verbose", false);
             reader.setFeature("javax.wsdl.importDocuments", true);
-
             InputStream wsdlStream = new ByteArrayInputStream(wsdlDefinitionText.getBytes(Charset.defaultCharset()));
             wsdlDefinition = reader.readWSDL(null, new InputSource(wsdlStream));
 

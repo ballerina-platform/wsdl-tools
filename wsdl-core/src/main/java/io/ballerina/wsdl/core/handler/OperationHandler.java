@@ -50,7 +50,6 @@ import static io.ballerina.wsdl.core.handler.Constants.SOAP_PREFIX;
  * @since 0.1.0
  */
 public class OperationHandler {
-
     private final WsdlOperation wsdlOperation;
     private final List<WsdlOperation> processedOperations;
     private final SoapVersion soapVersion;
