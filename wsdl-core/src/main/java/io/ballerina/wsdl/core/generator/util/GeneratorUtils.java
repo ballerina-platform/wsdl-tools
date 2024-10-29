@@ -40,10 +40,9 @@ public class GeneratorUtils {
         Token slashToken = NodeFactory.createToken(SyntaxKind.SLASH_TOKEN);
         ImportOrgNameNode importOrgNameNode = NodeFactory.createImportOrgNameNode(orgNameToken, slashToken);
         Token moduleNameToken = AbstractNodeFactory.createIdentifierToken(moduleName);
-        SeparatedNodeList<IdentifierToken> moduleNodeList = AbstractNodeFactory.createSeparatedNodeList(
-                moduleNameToken);
+        SeparatedNodeList<IdentifierToken> moduleNodeList = AbstractNodeFactory
+                .createSeparatedNodeList(moduleNameToken);
         Token semicolon = NodeFactory.createToken(SyntaxKind.SEMICOLON_TOKEN);
-
         return NodeFactory.createImportDeclarationNode(importKeyword, importOrgNameNode,
                 moduleNodeList, null, semicolon);
     }

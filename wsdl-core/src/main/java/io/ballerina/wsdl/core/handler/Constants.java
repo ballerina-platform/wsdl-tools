@@ -24,17 +24,14 @@ package io.ballerina.wsdl.core.handler;
  * @since 0.1.0
  */
 public class Constants {
-
     public static final String REGEX_ANY_CHAR_NOT_ALPHA_NUMERIC = "[^a-zA-Z0-9]";
     public static final String REGEX_URL_SCHEME_MATCH = "http?://";
-
     public static final String SOAP11_NS_URI = "http://schemas.xmlsoap.org/soap/envelope/";
     public static final String SOAP12_NS_URI = "http://www.w3.org/2003/05/soap-envelope";
     public static final String SOAP_PREFIX = "soap";
     public static final String SOAP_ENVELOPE = "Envelope";
     public static final String SOAP_HEADER = "Header";
     public static final String SOAP_BODY = "Body";
-
     public static final String CONTENT = "#content";
     public static final String STRING = "string";
     public static final String USE_REQUIRED = "required";

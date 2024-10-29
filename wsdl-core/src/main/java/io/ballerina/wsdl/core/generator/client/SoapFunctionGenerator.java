@@ -52,9 +52,7 @@ import static io.ballerina.compiler.syntax.tree.NodeFactory.createFunctionBodyBl
  * @since 0.1.0
  */
 public class SoapFunctionGenerator {
-
     private final WsdlOperation wsdlOperation;
-
     protected SoapFunctionGenerator(WsdlOperation wsdlOperation) {
         this.wsdlOperation = wsdlOperation;
     }

@@ -41,9 +41,7 @@ import java.util.List;
  * @since 0.1.0
  */
 public class SoapClientModulePartGenerator {
-
     private final WsdlService wsdlService;
-
     protected SoapClientModulePartGenerator(WsdlService wsdlService) {
         this.wsdlService = wsdlService;
     }

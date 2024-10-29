@@ -29,7 +29,6 @@ import java.util.Objects;
  * @since 0.1.0
  */
 public class DiagnosticMessage {
-
     private final String code;
     private final String description;
     private final DiagnosticSeverity severity;
