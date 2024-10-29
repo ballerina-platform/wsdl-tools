@@ -101,8 +101,7 @@ public class WsdlCmd implements BLauncherCmd {
 
     @Override
     public void printLongDesc(StringBuilder out) {
-        out.append("Generate client stubs and records from a WSDL file").append(System.lineSeparator());
-        out.append(System.lineSeparator());
+        out.append(BLauncherCmd.getCommandUsageInfo(COMMAND_IDENTIFIER));
     }
 
     @Override
