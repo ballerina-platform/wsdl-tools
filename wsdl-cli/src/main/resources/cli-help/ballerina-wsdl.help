@@ -1,0 +1,39 @@
+NAME
+       ballerina-wsdl - Generate a Ballerina client stub and types from a
+       WSDL file.
+
+
+SYNOPSIS
+        bal wsdl -i <FILE_NAME>
+                 [--operations <COMMA_SEPARATED_OPERATION_NAMES>]
+                 [-o | --output] <output-location>
+
+
+DESCRIPTION
+       Generate a Ballerina source (client stub and record types) from
+       the given WSDL file.
+
+       The generated Ballerina sources will be written into the provided output
+       location.
+
+OPTIONS
+       -i, --input <openapi-contract-file-path | ballerina-service-file-path>
+            This is a mandatory input. The given WSDL input will
+            generate a Ballerina client stub and types.
+
+       --operations <operation-names>
+            This option allows the user to specify a list of operations for which
+            Ballerina types are to be generated. If not provided, types and client
+            methods for all operations in the WSDL will be generated.
+
+       -o, --output <output>
+            Location of the generated Ballerina source code. If this path is not
+            specified, the output will be written to the same directory from
+            which the command is run.
+
+EXAMPLES
+       Generate a Ballerina client stub service using a `calculator.wsdl` WSDL file.
+           $ bal wsdl -i calculator.wsdl -o path/to/output/directory
+
+       Generate a Ballerina client using a `hello.yaml` OpenAPI contract including specific operations.
+           $ bal wsdl -i calculator.wsdl --operations Add, Divide -o path/to/output/directory

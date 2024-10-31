@@ -1,0 +1,12 @@
+[package]
+distribution = "2201.9.0"
+org = "ballerina"
+name = "wsdltool"
+version = "0.1.1"
+authors = ["Ballerina"]
+keywords = ["wsdl"]
+repository = "https://github.com/ballerina-platform/wsdl-tools"
+license = ["Apache-2.0"]
+
+[build-options]
+observabilityIncluded = false

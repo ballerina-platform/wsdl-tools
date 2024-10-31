@@ -1,0 +1,147 @@
+/*
+ *  Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com)
+ *
+ *  WSO2 LLC. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied.  See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
+description = 'Ballerina - WSDL Tools'
+
+def packageName = "wsdltool"
+def packageOrg = "ballerina"
+def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
+
+def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/package/Ballerina.toml")
+def balToolTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/package/BalTool.toml")
+def ballerinaTomlFile = new File("$project.projectDir/Ballerina.toml")
+def balToolTomlFile = new File("$project.projectDir/BalTool.toml")
+
+def distributionBinPath =  project.projectDir.absolutePath + "/build/target/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"
+
+def stripBallerinaExtensionVersion(String extVersion) {
+    if (extVersion.matches(project.ext.timestampedVersionRegex)) {
+        def splitVersion = extVersion.split('-')
+        if (splitVersion.length > 3) {
+            def strippedValues = splitVersion[0..-4]
+            return strippedValues.join('-')
+        } else {
+            return extVersion
+        }
+    } else {
+        return extVersion.replace("${project.ext.snapshotVersion}", '')
+    }
+}
+
+configurations {
+    copyJars
+    balTools
+}
+
+dependencies {
+    copyJars "wsdl4j:wsdl4j:${wsdl4jVersion}"
+    copyJars "org.apache.ws.commons.schema:XmlSchema:${apacheXmlSchemaVersion}"
+
+    balTools ("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
+        transitive = false
+    }
+}
+
+tasks.register('updateTomlFiles') {
+    // Update the Ballerina.toml and Dependencies.toml files
+    doLast {
+        def newConfig = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
+        newConfig = newConfig.replace("@toml.version@", tomlVersion)
+        ballerinaTomlFile.text = newConfig
+
+        def newToolConfig = balToolTomlFilePlaceHolder.text.replace("@project.version@", project.version)
+        newToolConfig = newToolConfig.replace("@toml.version@", project.version)
+        newToolConfig = newToolConfig.replace("@wsdl4j-version@", wsdl4jVersion)
+        newToolConfig = newToolConfig.replace("@xmlschema-version@", apacheXmlSchemaVersion)
+        balToolTomlFile.text = newToolConfig
+    }
+}
+
+tasks.register('commitTomlFiles') {
+    // Commit the Ballerina.toml and Dependencies.toml files
+    doLast {
+        project.exec {
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git commit -m \"[Automated] Update the native jar versions\" Ballerina.toml Dependencies.toml"
+            } else {
+                commandLine 'sh', '-c', "git commit -m '[Automated] Update the native jar versions' Ballerina.toml Dependencies.toml"
+            }
+        }
+    }
+}
+
+tasks.register('unpackJballerinaTools', Copy) {
+    configurations.balTools.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+        from zipTree(artifact.getFile())
+        into new File("${buildDir}/target/extracted-distributions", "jballerina-tools-zip")
+    }
+}
+
+tasks.register('copyDependenciesToLib', Copy) {
+    into "$project.projectDir/lib"
+    from configurations.copyJars
+
+    into "$project.projectDir/lib"
+    from "../wsdl-cli/build/libs/wsdl-cli-${project.version}.jar"
+
+    into "$project.projectDir/lib"
+    from "../wsdl-core/build/libs/wsdl-core-${project.version}.jar"
+
+    include "*.jar"
+
+    doFirst {
+        mkdir "$project.projectDir/lib"
+    }
+}
+
+tasks.register('ballerinaBuild') {
+    doLast {
+        exec {
+            workingDir project.projectDir
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', "/c", "$distributionBinPath/bal pack"
+            } else {
+                commandLine 'sh', "-c", "$distributionBinPath/bal pack"
+            }
+        }
+    }
+}
+
+tasks.register('clean', Delete) {
+    delete buildDir
+    delete file("$project.projectDir/lib")
+    delete file("$project.projectDir/target")
+}
+
+tasks.register('build') {
+    dependsOn ":wsdl-cli:build"
+    dependsOn copyDependenciesToLib
+    dependsOn unpackJballerinaTools
+    dependsOn updateTomlFiles
+    dependsOn commitTomlFiles
+    dependsOn ballerinaBuild
+}
+
+copyDependenciesToLib.dependsOn ":wsdl-cli:build"
+ballerinaBuild.dependsOn copyDependenciesToLib
+ballerinaBuild.dependsOn unpackJballerinaTools
+ballerinaBuild.dependsOn updateTomlFiles
+commitTomlFiles.dependsOn updateTomlFiles
