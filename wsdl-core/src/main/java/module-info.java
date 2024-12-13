@@ -26,5 +26,8 @@ module io.ballerina.wsdl.core {
     requires java.xml;
     requires io.ballerina.formatter.core;
 
+    exports io.ballerina.xsd.core;
+    exports io.ballerina.xsd.core.visitor;
+    exports io.ballerina.xsd.core.component;
     exports io.ballerina.wsdl.core;
 }
