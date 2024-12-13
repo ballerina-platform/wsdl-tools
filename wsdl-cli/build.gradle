@@ -30,6 +30,7 @@ dependencies {
     implementation project(':wsdl-core')
     implementation 'org.ballerinalang:ballerina-cli:2201.5.0'
     implementation 'info.picocli:picocli:4.0.1'
+    testImplementation 'junit:junit:4.13.1'
 }
 
 build.dependsOn ":wsdl-core:build"
