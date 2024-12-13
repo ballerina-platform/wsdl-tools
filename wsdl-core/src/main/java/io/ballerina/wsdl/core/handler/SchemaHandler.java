@@ -31,7 +31,6 @@ import java.util.Map;
 public class SchemaHandler {
 
     private static final SchemaHandler instance = new SchemaHandler();
-
     private Map<String, XmlSchema> targetNSToSchema;
 
     private SchemaHandler() {

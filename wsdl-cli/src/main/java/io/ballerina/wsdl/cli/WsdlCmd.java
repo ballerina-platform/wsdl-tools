@@ -52,16 +52,19 @@ import static io.ballerina.wsdl.cli.Messages.MISSING_WSDL_PATH;
 )
 public class WsdlCmd implements BLauncherCmd {
     private static final String CMD_NAME = "wsdl";
+    private static final String COMMAND_IDENTIFIER = "ballerina-wsdl";
     private final PrintStream outStream;
     private final boolean exitWhenFinish;
-    @CommandLine.Option(names = {"-h", "--help"}, hidden = true)
-    private boolean helpFlag;
 
     @CommandLine.Parameters(description = "Input file path of the WSDL schema")
     private List<String> inputPath = new ArrayList<>();
 
-    @CommandLine.Option(names = {"--operations"}, description = "Comma-separated operation names to generate")
-    private String operations;
+    @CommandLine.Option(names = {"--operations"},
+                        description = "Comma-separated operation names to generate", split = ",")
+    private String[] operations;
+
+    @CommandLine.Option(names = {"--help", "-h"}, hidden = true)
+    private boolean helpFlag;
 
     public static final String INVALID_BALLERINA_DIRECTORY_ERROR =
             "Invalid Ballerina package directory: %s, cannot find 'Ballerina.toml' file";
@@ -187,6 +190,8 @@ public class WsdlCmd implements BLauncherCmd {
             if (!"y".equalsIgnoreCase(userInput.trim())) {
                 outStream.println("Action canceled: No changes have been made.");
                 return;
+            } else {
+                outStream.println("File " + sourceFile.fileName() + " has been overwritten.");
             }
         }
 
