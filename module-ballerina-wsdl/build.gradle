@@ -141,6 +141,7 @@ tasks.register('build') {
 }
 
 copyDependenciesToLib.dependsOn ":wsdl-cli:build"
+copyDependenciesToLib.dependsOn ":wsdl-core:build"
 ballerinaBuild.dependsOn copyDependenciesToLib
 ballerinaBuild.dependsOn unpackJballerinaTools
 ballerinaBuild.dependsOn updateTomlFiles
