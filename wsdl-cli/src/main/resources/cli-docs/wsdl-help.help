@@ -2,7 +2,7 @@ NAME
        bal wsdl - Generate a Ballerina client and types from a WSDL file.
 
 SYNOPSIS
-       bal wsdl <source-file-path> [--operations <operation-names>] [-o | --output] <destination-file-path>
+       bal wsdl <source-file-path> [--operations <operation-name>] [-o | --output] <destination-directory-path>
 
 DESCRIPTION
        The 'bal wsdl' command is used to generate a Ballerina client and record types for a given XSD file.
@@ -11,9 +11,8 @@ OPTIONS
        <source-file-path>
             Path to the WSDL file. This is a mandatory input.
 
-       --operations <operation-names>
-            Comma separated list of operation names to generate client methods. If this option is not
-            provided, client methods will be generated for all operations.
+       --operations <operation-name>
+            The URI of the operation action to generate client methods.
 
        -o, --output <output path>
             Location of the generated Ballerina source code. If this path is not
@@ -23,7 +22,7 @@ OPTIONS
 EXAMPLE
        Generate a Ballerina client and types from a WSDL schema. The output will be saved to the types.bal file
        in the same directory where the command is executed.
-           $ bal wsdl schema.wsdl
+           $ bal wsdl schema.wsdl --operation http://example-operation-action-uri/path
 
        Generate types from a WSDL schema with a specified relative path of the output file
-           $ bal wsdl schema.wsdl -o modules/xsd
+           $ bal wsdl schema.wsdl --operation http://example-operation-action-uri/path -o modules/xsd
