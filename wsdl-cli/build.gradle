@@ -30,7 +30,25 @@ dependencies {
     implementation project(':wsdl-core')
     implementation 'org.ballerinalang:ballerina-cli:2201.5.0'
     implementation 'info.picocli:picocli:4.0.1'
-    testImplementation 'junit:junit:4.13.1'
+    testImplementation group: 'junit', name: 'junit', version: "${junitVersion}"
+    testImplementation group: 'org.testng', name: 'testng', version: "${testngVersion}"
+    implementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${junitEngineVersion}"
+    implementation "wsdl4j:wsdl4j:${wsdl4jVersion}"
+    implementation "org.ballerinalang:ballerina-lang:${ballerinaLangVersion}"
+    implementation "org.ballerinalang:ballerina-parser:${ballerinaLangVersion}"
+    implementation "org.ballerinalang:formatter-core:${ballerinaLangVersion}"
+    implementation "org.ballerinalang:ballerina-cli:${ballerinaLangVersion}"
+    implementation "org.ballerinalang:ballerina-tools-api:${ballerinaLangVersion}"
+    implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
+}
+
+compileJava {
+    doFirst {
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+        ]
+        classpath = files()
+    }
 }
 
 build.dependsOn ":wsdl-core:build"
