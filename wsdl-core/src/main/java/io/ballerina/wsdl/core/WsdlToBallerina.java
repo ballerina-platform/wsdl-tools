@@ -20,6 +20,8 @@ package io.ballerina.wsdl.core;
 
 import com.ibm.wsdl.MessageImpl;
 import com.ibm.wsdl.PartImpl;
+import com.ibm.wsdl.extensions.soap.SOAPHeaderImpl;
+import com.ibm.wsdl.extensions.soap12.SOAP12HeaderImpl;
 import io.ballerina.compiler.syntax.tree.AbstractNodeFactory;
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
@@ -27,7 +29,6 @@ import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.NodeParser;
-import io.ballerina.compiler.syntax.tree.Token;
 import io.ballerina.wsdl.core.diagnostic.DiagnosticMessage;
 import io.ballerina.wsdl.core.diagnostic.DiagnosticUtils;
 import io.ballerina.wsdl.core.generator.GeneratedSource;
@@ -35,61 +36,54 @@ import io.ballerina.wsdl.core.handler.SchemaHandler;
 import io.ballerina.wsdl.core.handler.model.SoapVersion;
 import io.ballerina.wsdl.core.handler.model.WsdlOperation;
 import io.ballerina.wsdl.core.handler.model.WsdlService;
+import io.ballerina.xsd.core.visitor.XSDVisitor;
 import io.ballerina.xsd.core.visitor.XSDVisitorImpl;
 import org.apache.ws.commons.schema.XmlSchema;
 import org.apache.ws.commons.schema.XmlSchemaCollection;
 import org.ballerinalang.formatter.core.Formatter;
 import org.ballerinalang.formatter.core.FormatterException;
 import org.ballerinalang.formatter.core.options.FormattingOptions;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.InputSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.wsdl.BindingOperation;
 import javax.wsdl.Definition;
-import javax.wsdl.Input;
 import javax.wsdl.Message;
-import javax.wsdl.Output;
 import javax.wsdl.Part;
 import javax.wsdl.Port;
 import javax.wsdl.Service;
 import javax.wsdl.Types;
-import javax.wsdl.WSDLElement;
 import javax.wsdl.WSDLException;
 import javax.wsdl.extensions.schema.Schema;
 import javax.wsdl.extensions.soap.SOAPAddress;
-import javax.wsdl.extensions.soap.SOAPHeader;
 import javax.wsdl.extensions.soap.SOAPOperation;
 import javax.wsdl.extensions.soap12.SOAP12Address;
-import javax.wsdl.extensions.soap12.SOAP12Header;
 import javax.wsdl.extensions.soap12.SOAP12Operation;
-import javax.wsdl.factory.WSDLFactory;
-import javax.wsdl.xml.WSDLReader;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import static io.ballerina.xsd.core.Utils.generateModulePartNode;
-import static io.ballerina.xsd.core.XSDToRecord.INVALID_XSD_FORMAT_ERROR;
-import static io.ballerina.xsd.core.XSDToRecord.SCHEMA;
-import static io.ballerina.xsd.core.XSDToRecord.processNodeList;
+import static io.ballerina.xsd.core.XSDToRecord.TARGET_NAMESPACE;
+import static io.ballerina.xsd.core.XSDToRecord.generateNodes;
+import static io.ballerina.xsd.core.XSDToRecord.processEnumerations;
+import static io.ballerina.xsd.core.XSDToRecord.processExtensions;
+import static io.ballerina.xsd.core.XSDToRecord.processNameResolvers;
+import static io.ballerina.xsd.core.XSDToRecord.processNestedElements;
+import static io.ballerina.xsd.core.XSDToRecord.processRootElements;
+import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
+import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
+import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.TYPE;
 
 /**
  * Provides functionality to convert WSDL specifications into Ballerina source code.
@@ -146,120 +140,194 @@ public class WsdlToBallerina {
     public static final String XMLDATA_TO_XML = "xmldata:toXml";
     public static final String QUOTATION_MARK = "\"";
     public static final String XMLDATA_PARSE_AS_TYPE = "xmldata:parseAsType";
+    public static final String SOAP11_NAMESPACE = "http://schemas.xmlsoap.org/soap/envelope/";
+    public static final String SOAP12_NAMESPACE = "http://www.w3.org/2003/05/soap-envelope";
+    public static final String HEADER = "Header";
+    public static final String SLASH = "/";
+    public static final String XMLDATA_NAMESPACE_URI = "@xmldata:Namespace {uri: \"%s\"}\n%s %s?;";
+    public static final String SOAP_12 = "SOAP12";
+    public static final String SOAP_11 = "SOAP11";
     private Definition wsdlDefinition;
     private Port soapPort;
     private SoapVersion soapVersion;
+    private String soapNamespace;
 
-    public WsdlToBallerinaResponse generateFromWSDL(String wsdlDefinitionText, String filteredWSDLOperations) {
+    public WsdlToBallerinaResponse generateFromWSDL(Definition wsdlDefinition, String outputDirectory,
+                                                    String filteredWSDLOperations) {
         List<DiagnosticMessage> diagnosticMessages = new ArrayList<>();
         WsdlToBallerinaResponse response = new WsdlToBallerinaResponse();
         try {
-            wsdlDefinition = readWsdlContent(wsdlDefinitionText);
+            this.wsdlDefinition = wsdlDefinition;
             WsdlService wsdlService = getSoapService(wsdlDefinition);
             if (wsdlService == null) {
+                DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaErr100(null);
+                diagnosticMessages.add(message);
+                DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
                 return response;
             }
             soapVersion = wsdlService.getSoapVersion();
+            soapNamespace = soapVersion.equals(SoapVersion.SOAP12) ? SOAP12_NAMESPACE : SOAP11_NAMESPACE;
             initializeSchemas(wsdlDefinition);
             Map<String, WsdlOperation> wsdlOperations = getWSDLOperations();
-
             Types types = wsdlDefinition.getTypes();
             if (types == null) {
                 throw new Exception("Could not find <xs:schema> in the file");
             }
-            WsdlOperation operation = wsdlOperations.get(filteredWSDLOperations);
-            String operationName = operation.getOperationName();
-            String operationAction = operation.getOperationAction();
-            ModulePartNode modulePartNode = generateTypeNodes(operationName, types, operation.getOperationInput(),
-                                                              operation.getOperationOutput());
-            writeTypesToFile(modulePartNode);
-            StringBuilder stringBuilder = Utils.generateClientSkeleton(soapVersion.toString());
-            ModulePartNode clientModulePart = getClientModulePartNode(stringBuilder, operationName, operationAction);
-            try {
-                String content = Utils.formatModuleParts(clientModulePart);
-                Files.writeString(Path.of(CLIENT_FILE_NAME), content);
-                FormattingOptions formattingOptions = FormattingOptions.builder().build();
-                GeneratedSource clientSrc = new GeneratedSource(CLIENT_FILE_NAME,
-                        Formatter.format(clientModulePart.syntaxTree(), formattingOptions).toSourceCode());
-                response.setClientSource(clientSrc);
-            } catch (FormatterException e) {
-                DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaErr101(null);
-                diagnosticMessages.add(message);
-            }
+            generateFiles(filteredWSDLOperations, diagnosticMessages, response, wsdlOperations, types, outputDirectory);
         } catch (WSDLException e) {
             DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaErr100(null);
             diagnosticMessages.add(message);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
+        DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
+        return response;
     }
 
-    private static ModulePartNode getClientModulePartNode(StringBuilder stringBuilder,
-                                                          String operationName, String operationAction) {
-        stringBuilder.append(REMOTE).append(WHITESPACE).append(ISOLATED).append(WHITESPACE).append(FUNCTION)
+    public static Header extractHeader(Definition wsdlDefinition, QName messageName, String elementName) {
+        if (wsdlDefinition == null || messageName == null) {
+            throw new IllegalArgumentException("WSDL Definition and Message QName cannot be null.");
+        }
+        Message message = (Message) wsdlDefinition.getMessages().get(messageName);
+        if (message == null) {
+            throw new IllegalArgumentException("Message not found in the WSDL Definition: " + messageName);
+        }
+        Part partObj = (Part) message.getParts().get(elementName);
+        QName element = partObj.getElementName();
+        return new Header(element.getLocalPart(), element.getNamespaceURI());
+    }
+
+    private void generateFiles(String filteredWSDLOperations, List<DiagnosticMessage> diagnosticMessages,
+                               WsdlToBallerinaResponse response, Map<String, WsdlOperation> wsdlOperations,
+                               Types types, String outputDirectory) throws Exception {
+        WsdlOperation operation = validateAndRetrieveOperation(filteredWSDLOperations, wsdlOperations);
+        ModuleMemberDeclarationNode headerNode = generateHeaderNode(operation);
+        ModulePartNode typeNodes = generateTypeNodes(operation, types, headerNode);
+        String typesFileName = outputDirectory.equals(EMPTY_STRING)
+                ? TYPES_FILE_NAME : outputDirectory + SLASH + TYPES_FILE_NAME;
+        response.setTypesSource(new GeneratedSource(typesFileName, Utils.formatModuleParts(typeNodes)));
+        ModulePartNode clientModule = generateClientModule(operation);
+        String clientFileName = outputDirectory.equals(EMPTY_STRING)
+                ? CLIENT_FILE_NAME : outputDirectory + SLASH + CLIENT_FILE_NAME;
+        response.setClientSource(new GeneratedSource(clientFileName, Utils.formatModuleParts(clientModule)));
+    }
+
+    private ModuleMemberDeclarationNode generateHeaderNode(WsdlOperation operation) {
+        Map<String, Header> headers = new HashMap<>();
+        List<String> elementNames = operation.getHeaderElements();
+        QName headerName = new QName(wsdlDefinition.getTargetNamespace(), operation.getInputHeaderName());
+        for (String elementName : elementNames) {
+            Header header = extractHeader(wsdlDefinition, headerName, elementName);
+            headers.put(elementName, header);
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(String.format(Utils.XMLDATA_NAMESPACE, soapNamespace));
+        stringBuilder.append(PUBLIC).append(WHITESPACE).append(TYPE).append(WHITESPACE).append(HEADER)
+                .append(WHITESPACE).append(RECORD).append(OPEN_BRACES);
+        for (String key: headers.keySet()) {
+            String elementName = headers.get(key).getElementName();
+            String namespace = headers.get(key).getElementNamespace();
+            String field = String.format(XMLDATA_NAMESPACE_URI, namespace, key, elementName);
+            stringBuilder.append(field);
+        }
+        stringBuilder.append(CLOSE_BRACES).append(SEMICOLON);
+        return NodeParser.parseModuleMemberDeclaration(stringBuilder.toString());
+    }
+
+    private WsdlOperation validateAndRetrieveOperation(String operationName,
+                                                       Map<String, WsdlOperation> wsdlOperations) throws Exception {
+        WsdlOperation operation = wsdlOperations.get(operationName);
+        if (operation == null) {
+            throw new Exception("WSDL operation not found: " + operationName);
+        }
+        return operation;
+    }
+
+    private ModulePartNode generateTypeNodes(WsdlOperation operation, Types types,
+                                             ModuleMemberDeclarationNode node) throws Exception {
+        if (types == null) {
+            throw new Exception("Could not find <xs:schema> in the WSDL file");
+        }
+        return generateTypeNodes(types, operation.getOperationInput(), operation.getOperationOutput(), node);
+    }
+
+    private ModulePartNode generateClientModule(WsdlOperation operation) {
+        StringBuilder clientContext = Utils.generateClientContext(soapVersion.toString());
+        return getClientModulePartNode(clientContext, operation.getOperationName(),
+                                       operation.getOperationAction(), soapVersion.toString());
+    }
+
+    private static ModulePartNode getClientModulePartNode(StringBuilder stringBuilder, String operationName,
+                                                          String operationAction, String soapVersion) {
+        String functionCode = buildRemoteFunctionCode(operationName, operationAction);
+        stringBuilder.append(functionCode).append(CLOSE_BRACES);
+        ModuleMemberDeclarationNode functionNode = NodeParser.parseModuleMemberDeclaration(stringBuilder.toString());
+        NodeList<ImportDeclarationNode> imports = createImportNodes(
+                "import ballerina/data.xmldata;",
+                "import ballerina/soap;",
+                String.format("import ballerina/soap.%s;", soapVersion.toLowerCase(Locale.ROOT))
+        );
+        NodeList<ModuleMemberDeclarationNode> moduleMembers =
+                AbstractNodeFactory.createNodeList(Collections.singletonList(functionNode));
+        return NodeFactory.createModulePartNode(imports, moduleMembers,
+                AbstractNodeFactory.createIdentifierToken(EOF_TOKEN));
+    }
+
+    private static String buildRemoteFunctionCode(String operationName, String operationAction) {
+        return new StringBuilder()
+                .append(REMOTE).append(WHITESPACE).append(ISOLATED).append(WHITESPACE).append(FUNCTION)
                 .append(WHITESPACE).append(operationName).append(OPEN_PARENTHESIS).append(SOAP_REQUEST)
                 .append(WHITESPACE).append(ENVELOPE).append(CLOSE_PARENTHESIS).append(WHITESPACE)
                 .append(RETURNS).append(WHITESPACE).append(SOAP_RESPONSE).append(VERTICAL_BAR).append(ERROR)
-                .append(WHITESPACE).append(OPEN_BRACES).append(XML).append(WHITESPACE).append(RESULT)
-                .append(WHITESPACE).append(EQUALS).append(WHITESPACE).append(CHECK).append(WHITESPACE)
-                .append(SELF).append(DOT).append(CLIENT_ENDPOINT_FIELD).append(ARROW).append(SEND_RECEIVE)
-                .append(OPEN_PARENTHESIS).append(CHECK).append(WHITESPACE).append(XMLDATA_TO_XML)
-                .append(OPEN_PARENTHESIS).append(ENVELOPE).append(CLOSE_PARENTHESIS).append(COMMA)
-                .append(WHITESPACE).append(QUOTATION_MARK).append(operationAction).append(QUOTATION_MARK)
-                .append(CLOSE_PARENTHESIS).append(SEMICOLON).append(RETURN).append(WHITESPACE)
-                .append(XMLDATA_PARSE_AS_TYPE).append(OPEN_PARENTHESIS).append(RESULT).append(CLOSE_PARENTHESIS)
-                .append(SEMICOLON).append(CLOSE_BRACES);
-        stringBuilder.append(CLOSE_BRACES);
-        ModuleMemberDeclarationNode moduleNode = NodeParser.parseModuleMemberDeclaration(stringBuilder.toString());
-        String[] importStatements = {"import ballerina/data.xmldata;", "import ballerina/soap;",
-                "import ballerina/soap.soap12;"};
-        NodeList<ImportDeclarationNode> imports = Utils.createImportNodes(importStatements);
-
-        List<ModuleMemberDeclarationNode> moduleMemberDeclarations = new ArrayList<>();
-        moduleMemberDeclarations.add(moduleNode);
-        NodeList<ModuleMemberDeclarationNode> moduleMembers =
-                AbstractNodeFactory.createNodeList(moduleMemberDeclarations);
-        Token eofToken = AbstractNodeFactory.createIdentifierToken(EOF_TOKEN);
-        return NodeFactory.createModulePartNode(imports, moduleMembers, eofToken);
+                .append(WHITESPACE).append(OPEN_BRACES)
+                .append(XML).append(WHITESPACE).append(RESULT).append(WHITESPACE).append(EQUALS).append(WHITESPACE)
+                .append(CHECK).append(WHITESPACE).append(SELF).append(DOT).append(CLIENT_ENDPOINT_FIELD)
+                .append(ARROW).append(SEND_RECEIVE).append(OPEN_PARENTHESIS).append(CHECK).append(WHITESPACE)
+                .append(XMLDATA_TO_XML).append(OPEN_PARENTHESIS).append(ENVELOPE).append(CLOSE_PARENTHESIS)
+                .append(COMMA).append(WHITESPACE).append(QUOTATION_MARK).append(operationAction)
+                .append(QUOTATION_MARK).append(CLOSE_PARENTHESIS).append(SEMICOLON)
+                .append(RETURN).append(WHITESPACE).append(XMLDATA_PARSE_AS_TYPE)
+                .append(OPEN_PARENTHESIS).append(RESULT).append(CLOSE_PARENTHESIS).append(SEMICOLON)
+                .append(CLOSE_BRACES)
+                .toString();
     }
 
-    private static void writeTypesToFile(ModulePartNode modulePartNode) throws FormatterException, IOException {
-        String records = Utils.formatModuleParts(modulePartNode);
-        Path path = Paths.get(TYPES_FILE_NAME);
-        Path destinationFile = Files.exists(path) ? Utils.handleFileOverwrite(path) : path;
-        Files.writeString(destinationFile, records);
+    private static NodeList<ImportDeclarationNode> createImportNodes(String... importStatements) {
+        List<ImportDeclarationNode> importNodes = Arrays.stream(importStatements)
+                .map(NodeParser::parseImportDeclaration)
+                .toList();
+        return AbstractNodeFactory.createNodeList(importNodes);
     }
 
-    private ModulePartNode generateTypeNodes(String wsdlAction, Types types,
-                                             String operationInput, String operationOutput) throws Exception {
+    private ModulePartNode generateTypeNodes(Types types, String operationInput, String operationOutput,
+                                             ModuleMemberDeclarationNode node) throws Exception {
         List<?> extElements = types.getExtensibilityElements();
-        HashMap<String, ModuleMemberDeclarationNode> nodes = new LinkedHashMap<>();
-        XSDVisitorImpl xsdVisitor = new XSDVisitorImpl();
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document unifiedDocument = builder.newDocument();
-        Element unifiedRoot = unifiedDocument.createElementNS("http://www.w3.org/2001/XMLSchema", SCHEMA);
-        unifiedDocument.appendChild(unifiedRoot);
+        Map<String, ModuleMemberDeclarationNode> nodes = new LinkedHashMap<>();
+        XSDVisitor xsdVisitor = new XSDVisitorImpl();
         for (Object extElement : extElements) {
-            if (extElement instanceof Schema schema) {
-                Element schemaElement = schema.getElement();
-                org.w3c.dom.NodeList childNodes = schemaElement.getChildNodes();
-                for (int i = 0; i < childNodes.getLength(); i++) {
-                    Node importedNode = unifiedDocument.importNode(childNodes.item(i), true);
-                    unifiedRoot.appendChild(importedNode);
-                }
+            if (!(extElement instanceof Schema)) {
+                continue;
             }
+            xsdVisitor.setTargetNamespace(((Schema) extElement).getElement().getAttribute(TARGET_NS));
+            generateTypeNode(xsdVisitor, (Schema) extElement, nodes);
         }
-        Element rootElement = unifiedDocument.getDocumentElement();
-        if (!Objects.equals(rootElement.getLocalName(), SCHEMA)) {
-            throw new Exception(INVALID_XSD_FORMAT_ERROR);
-        }
-        processNodeList(rootElement, nodes, xsdVisitor);
+        processRootElements(nodes, xsdVisitor.getRootElements());
+        processNestedElements(nodes, xsdVisitor.getNestedElements());
+        processNameResolvers(nodes, xsdVisitor.getNameResolvers());
+        processExtensions(nodes, xsdVisitor);
+        processEnumerations(nodes, xsdVisitor.getEnumerationElements());
         String requestType = getElementLocalPart(operationInput, wsdlDefinition);
         String responseType = getElementLocalPart(operationOutput, wsdlDefinition);
-        Utils.generateTypeDefinitions(wsdlAction, nodes, requestType, responseType);
+        Utils.generateTypeDefinitions(soapNamespace, nodes, requestType, responseType);
+        nodes.put(HEADER, node);
         return generateModulePartNode(nodes, xsdVisitor);
+    }
+
+    private static void generateTypeNode(XSDVisitor xsdVisitor, Schema schema,
+                                         Map<String, ModuleMemberDeclarationNode> nodes) throws Exception {
+        Element schemaElement = schema.getElement();
+        xsdVisitor.setTargetNamespace(schemaElement.getAttribute(TARGET_NAMESPACE));
+        generateNodes(schemaElement, nodes, xsdVisitor);
     }
 
     private String getElementLocalPart(String messageName, Definition wsdlDefinition) {
@@ -276,19 +344,10 @@ public class WsdlToBallerina {
         return parts.get(firstPartKey).getElementName().getLocalPart();
     }
 
-    private Definition readWsdlContent(String wsdlDefinitionText) throws WSDLException {
-        WSDLReader reader = WSDLFactory.newInstance().newWSDLReader();
-        reader.setFeature("javax.wsdl.verbose", false);
-        reader.setFeature("javax.wsdl.importDocuments", true);
-        InputStream wsdlStream = new ByteArrayInputStream(wsdlDefinitionText.getBytes(Charset.defaultCharset()));
-        return reader.readWSDL(null, new InputSource(wsdlStream));
-    }
 
     private WsdlService getSoapService(Definition wsdlDefinition) {
-        @SuppressWarnings("unchecked")
         Collection<Service> services = wsdlDefinition.getAllServices().values();
         for (Service service : services) {
-            @SuppressWarnings("unchecked")
             Collection<Port> ports = service.getPorts().values();
             for (Port port : ports) {
                 List<?> extensions = port.getExtensibilityElements();
@@ -337,6 +396,8 @@ public class WsdlToBallerina {
             WsdlOperation wsdlOperation = getWsdlOperation(bindingOperation);
             String inputPayload = bindingOperation.getBindingInput().getName();
             String outputPayload = bindingOperation.getBindingOutput().getName();
+            List<String> headerParts = new ArrayList<>();
+            String inputHeaderName = generateSOAPInputHeaderParts(bindingOperation, headerParts, soapVersion);
 
             inputPayload = (inputPayload == null)
                     ? bindingOperation.getOperation().getInput().getMessage().getQName().getLocalPart()
@@ -350,11 +411,37 @@ public class WsdlToBallerina {
                     .setOperationName(bindingOperation.getOperation().getName())
                     .setOperationInput(inputPayload)
                     .setOperationOutput(outputPayload)
+                    .setInputHeaderName(inputHeaderName)
+                    .setHeaderElements(headerParts)
                     .build();
 
             wsdlOperations.put(wsdlOperation.getOperationAction(), wsdlOperation);
         }
         return wsdlOperations;
+    }
+
+    public static String generateSOAPInputHeaderParts(BindingOperation bindingOperation,
+                                                      List<String> partElements, SoapVersion soapVersion) {
+        List<?> extensibilityElements = bindingOperation.getBindingInput().getExtensibilityElements();
+        String inputHeaderName = "";
+        for (Object obj : extensibilityElements) {
+            if (soapVersion.equals(SoapVersion.SOAP12) && obj instanceof SOAP12HeaderImpl soapHeader) {
+                String part = soapHeader.getPart();
+                if (part != null) {
+                    partElements.add(part);
+                    inputHeaderName = soapHeader.getMessage().getLocalPart();
+                }
+            } else {
+                if (soapVersion.equals(SoapVersion.SOAP11) && obj instanceof SOAPHeaderImpl soapHeader) {
+                    String part = soapHeader.getPart();
+                    if (part != null) {
+                        partElements.add(part);
+                        inputHeaderName = soapHeader.getMessage().getLocalPart();
+                    }
+                }
+            }
+        }
+        return inputHeaderName;
     }
 
     private WsdlOperation getWsdlOperation(BindingOperation bindingOperation) {
