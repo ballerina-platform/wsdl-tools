@@ -27,6 +27,9 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 
+import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
+import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.generateFixedValue;
+
 /**
  * Contains utility functions for working with XSD specifications.
  *
@@ -82,17 +85,16 @@ public final class VisitorUtils {
     public static final String URI = "uri";
     public static final String DURATION = "duration";
 
-    public static String addNamespace(XSDVisitorImpl xsdVisitor, Node node) {
+    public static String addNamespace(XSDVisitorImpl xsdVisitor, String namespace) {
         xsdVisitor.addImports(BALLERINA_XML_DATA_MODULE);
-        return XMLDATA_NAMESPACE + WHITESPACE + OPEN_BRACES + PREFIX + COLON + QUOTATION_MARK + node.getPrefix() +
-                QUOTATION_MARK + COMMA + URI + COLON + QUOTATION_MARK + node.getNamespaceURI() +
+        return XMLDATA_NAMESPACE + WHITESPACE + OPEN_BRACES + URI + COLON + QUOTATION_MARK + namespace +
                 QUOTATION_MARK + CLOSE_BRACES;
     }
 
     public static void handleFixedValues(Node node, StringBuilder builder, Node typeNode) {
         Node fixedNode = node.getAttributes().getNamedItem(FIXED);
         if (fixedNode != null) {
-            builder.append(XSDVisitorImpl.generateFixedValue(deriveType(typeNode), fixedNode.getNodeValue())).append(WHITESPACE);
+            builder.append(generateFixedValue(deriveType(typeNode), fixedNode.getNodeValue())).append(WHITESPACE);
         } else {
             builder.append(deriveType(typeNode)).append(WHITESPACE);
         }
@@ -134,14 +136,14 @@ public final class VisitorUtils {
             String maxValue = maxOccurrence.getNodeValue();
             builder.append(maxValue.equals(UNBOUNDED)
                     ? OPEN_SQUARE_BRACKET + CLOSE_SQUARE_BRACKET + WHITESPACE : !maxValue.equals(ONE)
-                    ? OPEN_SQUARE_BRACKET + XSDVisitorImpl.EMPTY_STRING + CLOSE_SQUARE_BRACKET + WHITESPACE : XSDVisitorImpl.EMPTY_STRING
+                    ? OPEN_SQUARE_BRACKET + EMPTY_STRING + CLOSE_SQUARE_BRACKET + WHITESPACE : EMPTY_STRING
             );
         }
     }
 
     public static void handleFixedValues(StringBuilder builder, Node typeNode, Node fixedNode) {
         builder.append(fixedNode != null
-                ? XSDVisitorImpl.generateFixedValue(deriveType(typeNode), fixedNode.getNodeValue())
+                ? generateFixedValue(deriveType(typeNode), fixedNode.getNodeValue())
                 : deriveType(typeNode)).append(WHITESPACE);
     }
 

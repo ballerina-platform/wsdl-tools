@@ -103,6 +103,8 @@ public class XSDVisitorImpl implements XSDVisitor {
     public static final String XMLDATA_SEQUENCE = "@xmldata:Sequence";
     public static final String SEQUENCE_NAME = "SequenceGroup";
     public static final String XMLDATA_ORDER = "@xmldata:SequenceOrder";
+    public static final String APOSTROPHE = "'";
+    public static final String NAME_ATTRIBUTE_NOT_FOUND = "Required attribute is not found in <element>: 'name'";
 
     private final ArrayList<String> imports = new ArrayList<>();
     private final Map<String, String> extensions = new LinkedHashMap<>();
@@ -110,12 +112,13 @@ public class XSDVisitorImpl implements XSDVisitor {
     private final Map<String, String> nameResolvers = new LinkedHashMap<>();
     private final Map<String, String> nestedElements = new LinkedHashMap<>();
     private final Map<String, ArrayList<String>> enumerationElements = new LinkedHashMap<>();
+    public String targetNamespace;
 
     @Override
     public String visit(Element element) throws Exception {
         Node node = element.getNode();
         StringBuilder builder = new StringBuilder();
-        builder.append(addNamespace(this, node));
+        builder.append(addNamespace(this, getTargetNamespace()));
         builder.append(PUBLIC).append(WHITESPACE).append(TYPE).append(WHITESPACE);
         if (!node.hasChildNodes()) {
             return handleSingleElementNode(node, builder);
@@ -135,7 +138,7 @@ public class XSDVisitorImpl implements XSDVisitor {
         } else {
             handleFixedValues(node, builder, typeNode);
             handleMaxOccurrences(node, builder);
-            builder.append(nameNode.getNodeValue());
+            applyFieldName(builder, nameNode);
             handleMinOccurrences(element, builder);
             handleDefaultValues(node, builder, typeNode);
         }
@@ -143,11 +146,21 @@ public class XSDVisitorImpl implements XSDVisitor {
         return builder.toString();
     }
 
+    private static void applyFieldName(StringBuilder builder, Node nameNode) throws Exception {
+        if (nameNode == null) {
+            throw new Exception(NAME_ATTRIBUTE_NOT_FOUND);
+        }
+        if (isSimpleType(nameNode.getNodeValue())) {
+            builder.append(APOSTROPHE);
+        }
+        builder.append(nameNode.getNodeValue());
+    }
+
     @Override
     public String visit(ComplexType element) throws Exception {
         Node node = element.getNode();
         StringBuilder builder = new StringBuilder();
-        builder.append(addNamespace(this, node));
+        builder.append(addNamespace(this, getTargetNamespace()));
         builder.append(PUBLIC).append(WHITESPACE).append(TYPE).append(WHITESPACE);
         setTypeDefinition(element, node, builder);
         processChildNodes(node, builder);
@@ -184,7 +197,7 @@ public class XSDVisitorImpl implements XSDVisitor {
             if (simpleTypeNode.getNodeType() != Node.ELEMENT_NODE) {
                 continue;
             }
-            builder.append(addNamespace(this, element.getNode()));
+            builder.append(addNamespace(this, getTargetNamespace()));
             ArrayList<String> enumValues = new ArrayList<>();
             boolean enumeration = hasEnumerations(simpleTypeNode, enumValues);
             if (enumeration) {
@@ -199,6 +212,16 @@ public class XSDVisitorImpl implements XSDVisitor {
             }
         }
         return builder.toString();
+    }
+
+    @Override
+    public void setTargetNamespace(String targetNamespace) {
+        this.targetNamespace = targetNamespace;
+    }
+
+    @Override
+    public String getTargetNamespace() {
+        return this.targetNamespace;
     }
 
     private Node visitNestedElements(Node node, Node nameNode, Node typeNode) throws Exception {
@@ -263,7 +286,7 @@ public class XSDVisitorImpl implements XSDVisitor {
         StringBuilder builder = new StringBuilder();
         NodeList childNodes = node.getChildNodes();
         for (Node childNode : asIterable(childNodes)) {
-            addNamespace(this, childNode);
+            addNamespace(this, getTargetNamespace());
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 String localName = childNode.getLocalName();
                 switch (localName) {
@@ -284,7 +307,7 @@ public class XSDVisitorImpl implements XSDVisitor {
         StringBuilder childNodeBuilder = new StringBuilder();
         processChildChoiceNodes(childNodes, childNodeBuilder);
 
-        stringBuilder.append(addNamespace(this, node));
+        stringBuilder.append(addNamespace(this, getTargetNamespace()));
         String choiceName = applyChoiceAnnotation(builder, node);
         stringBuilder.append(PUBLIC).append(WHITESPACE).append(TYPE).append(WHITESPACE).append(choiceName);
         stringBuilder.append(WHITESPACE).append(RECORD).append(WHITESPACE).append(OPEN_BRACES).append(VERTICAL_BAR);
@@ -304,7 +327,7 @@ public class XSDVisitorImpl implements XSDVisitor {
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilder childNodeBuilder = new StringBuilder();
         processChildNodes(isOptional, childNodes, childNodeBuilder);
-        stringBuilder.append(addNamespace(this, node));
+        stringBuilder.append(addNamespace(this, getTargetNamespace()));
         String sequenceName = applySequenceAnnotation(node, builder);
         generateSequenceType(stringBuilder, childNodeBuilder, sequenceName);
         if (nestedElements.containsKey(sequenceName)) {
@@ -401,7 +424,7 @@ public class XSDVisitorImpl implements XSDVisitor {
             if (childNode.getLocalName().equals(SEQUENCE)) {
                 stringBuilder.append(visitSequence(childNode, true));
             } else {
-                stringBuilder.append(addNamespace(this, childNode));
+                stringBuilder.append(addNamespace(this, getTargetNamespace()));
                 Node nameNode = childNode.getAttributes().getNamedItem(NAME);
                 Node typeNode = childNode.getAttributes().getNamedItem(TYPE);
                 if (childNode.hasChildNodes()) {
@@ -450,7 +473,7 @@ public class XSDVisitorImpl implements XSDVisitor {
             }
             component.get().setSubType(true);
             component.get().setOptional(isOptional);
-            stringBuilder.append(addNamespace(this, childNode));
+            stringBuilder.append(addNamespace(this, getTargetNamespace()));
             String orderAnnotation = XMLDATA_ORDER + WHITESPACE + OPEN_BRACES + VALUE + COLON + order + CLOSE_BRACES;
             stringBuilder.append(orderAnnotation);
             stringBuilder.append(component.get().accept(this));
@@ -464,7 +487,7 @@ public class XSDVisitorImpl implements XSDVisitor {
         if (component.isPresent()) {
             component.get().setSubType(true);
             component.get().setOptional(isOptional);
-            stringBuilder.append(addNamespace(this, childNode));
+            stringBuilder.append(addNamespace(this, getTargetNamespace()));
             stringBuilder.append(component.get().accept(this));
         }
     }
