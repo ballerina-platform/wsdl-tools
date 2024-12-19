@@ -30,8 +30,12 @@ dependencies {
     implementation "org.ballerinalang:ballerina-tools-api:${ballerinaLangVersion}"
     implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
 
+    testImplementation group: 'junit', name: 'junit', version: "${junitVersion}"
+    testImplementation group: 'org.testng', name: 'testng', version: "${testngVersion}"
+    implementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${junitEngineVersion}"
     implementation "wsdl4j:wsdl4j:${wsdl4jVersion}"
     implementation "org.apache.ws.commons.schema:XmlSchema:${apacheXmlSchemaVersion}"
+    testImplementation project(path: ':wsdl-cli')
 }
 
 compileJava {
@@ -41,4 +45,8 @@ compileJava {
         ]
         classpath = files()
     }
+}
+
+test {
+    useJUnitPlatform()
 }
