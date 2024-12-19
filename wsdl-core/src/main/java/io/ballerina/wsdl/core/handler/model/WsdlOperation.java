@@ -18,6 +18,9 @@
 
 package io.ballerina.wsdl.core.handler.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a WSDL operation, detailing both its input and output payloads along with operation identifiers.
  *
@@ -29,6 +32,8 @@ public class WsdlOperation {
     private final String operationInput;
     private final String operationOutput;
     private final String operationUri;
+    private final String inputHeaderName;
+    private final List<String> headerElements;
 
     private WsdlOperation(Builder builder) {
         this.operationAction = builder.operationAction;
@@ -36,6 +41,8 @@ public class WsdlOperation {
         this.operationOutput = builder.operationOutput;
         this.operationUri = builder.operationUri;
         this.operationName = builder.operationName;
+        this.headerElements = builder.headerElements;
+        this.inputHeaderName = builder.inputHeaderName;
     }
 
     public String getOperationName() {
@@ -58,6 +65,14 @@ public class WsdlOperation {
         return operationUri;
     }
 
+    public List<String> getHeaderElements() {
+        return headerElements;
+    }
+
+    public String getInputHeaderName() {
+        return inputHeaderName;
+    }
+
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -68,6 +83,8 @@ public class WsdlOperation {
         private String operationInput;
         private String operationOutput;
         private String operationUri;
+        private String inputHeaderName;
+        private List<String> headerElements = new ArrayList<>();
 
         public Builder(String operationName) {
             this.operationName = operationName;
@@ -79,6 +96,8 @@ public class WsdlOperation {
             this.operationInput = wsdlOperation.operationInput;
             this.operationOutput = wsdlOperation.operationOutput;
             this.operationUri = wsdlOperation.operationUri;
+            this.headerElements = wsdlOperation.headerElements;
+            this.inputHeaderName = wsdlOperation.inputHeaderName;
         }
 
         public Builder setOperationName(String operationName) {
@@ -102,6 +121,24 @@ public class WsdlOperation {
 
         public Builder setOperationOutput(String operationOutput) {
             this.operationOutput = operationOutput;
+            return this;
+        }
+
+        public List<String> getHeaderElements() {
+            return headerElements;
+        }
+
+        public Builder setHeaderElements(List<String> headerElements) {
+            this.headerElements = headerElements;
+            return this;
+        }
+
+        public String getInputHeaderName() {
+            return inputHeaderName;
+        }
+
+        public Builder setInputHeaderName(String inputHeaderName) {
+            this.inputHeaderName = inputHeaderName;
             return this;
         }
 
