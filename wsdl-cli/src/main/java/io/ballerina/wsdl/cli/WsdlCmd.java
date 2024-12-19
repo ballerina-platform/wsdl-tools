@@ -20,25 +20,36 @@ package io.ballerina.wsdl.cli;
 
 import io.ballerina.cli.BLauncherCmd;
 import io.ballerina.wsdl.core.WsdlToBallerina;
+import io.ballerina.wsdl.core.WsdlToBallerinaResponse;
 import io.ballerina.wsdl.core.generator.GeneratedSource;
+import org.xml.sax.InputSource;
 import picocli.CommandLine;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
 
+import javax.wsdl.Definition;
+import javax.wsdl.WSDLException;
+import javax.wsdl.factory.WSDLFactory;
+import javax.wsdl.xml.WSDLReader;
+
+import static io.ballerina.wsdl.cli.Messages.INVALID_DIRECTORY_PATH;
 import static io.ballerina.wsdl.cli.Messages.MISSING_WSDL_PATH;
+import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
 
 /**
  * Command-line utility class for generating Ballerina source code from WSDL files.
@@ -53,15 +64,18 @@ import static io.ballerina.wsdl.cli.Messages.MISSING_WSDL_PATH;
 public class WsdlCmd implements BLauncherCmd {
     private static final String CMD_NAME = "wsdl";
     private static final String COMMAND_IDENTIFIER = "ballerina-wsdl";
+    public static final String FILE_OVERWRITE_PROMPT = "The file '%s' already exists." +
+            " Overwrite? [y/N]: ";
+    public static final String MISSING_OPERATION_ERROR = "Error: Operation name is required to generate the client";
+    public static final String SUCCESSFUL_MESSAGE = "Output is successfully written to %s";
     private final PrintStream outStream;
     private final boolean exitWhenFinish;
 
     @CommandLine.Parameters(description = "Input file path of the WSDL schema")
     private List<String> inputPath = new ArrayList<>();
 
-    @CommandLine.Option(names = {"--operations"},
-                        description = "Comma-separated operation names to generate", split = ",")
-    private String[] operations;
+    @CommandLine.Option(names = {"--operation"})
+    private String operation = "";
 
     @CommandLine.Option(names = {"--help", "-h"}, hidden = true)
     private boolean helpFlag;
@@ -71,7 +85,7 @@ public class WsdlCmd implements BLauncherCmd {
 
     @CommandLine.Option(names = {"-o", "--output"}, description = "Destination file path of the generated types from " +
             "the WSDL file")
-    private String outputPath = "types.bal";
+    private String outputPath = "";
 
     public WsdlCmd() {
         this.outStream = System.err;
@@ -93,28 +107,44 @@ public class WsdlCmd implements BLauncherCmd {
             exitOnError();
             return;
         }
+        Path outputDirPath = Path.of(outputPath);
+        if (Files.exists(outputDirPath) && !Files.isDirectory(outputDirPath)) {
+            outStream.printf((INVALID_DIRECTORY_PATH) + "%n", outputPath);
+            exitOnError();
+            return;
+        }
         if (inputPath.isEmpty()) {
             outStream.println(MISSING_WSDL_PATH);
             exitOnError();
             return;
         }
         try {
+            if (Files.notExists(Path.of(outputPath))) {
+                Files.createDirectories(Path.of(outputPath));
+            }
             if (!Files.exists(Path.of(inputPath.get(0)))) {
                 outStream.println(inputPath.get(0) + " file does not exist.");
                 return;
             }
-            try {
-                String[] operations = this.operations.split(",");
-                wsdlToBallerina(inputPath.get(0), operations);
-            } catch (IOException e) {
-                outStream.println("Error: " + e.getLocalizedMessage());
-                exitOnError();
+            if (this.operation.equals(EMPTY_STRING)) {
+                outStream.println(MISSING_OPERATION_ERROR);
+                return;
             }
-            outStream.println("Output is successfully written to " + inputPath.get(0));
+            WsdlToBallerinaResponse response = wsdlToBallerina(inputPath.get(0), outputPath, this.operation);
+            writeSourceToFiles(response.getTypesSource());
+            writeSourceToFiles(response.getClientSource());
+            outStream.printf((SUCCESSFUL_MESSAGE) + "%n", Path.of(outputPath).toAbsolutePath());
         } catch (Exception e) {
             outStream.println("Error: " + e.getLocalizedMessage());
             exitOnError();
         }
+    }
+
+    private void writeSourceToFiles(GeneratedSource response) throws IOException {
+        Path clientPath = Paths.get(response.fileName());
+        Path destinationClientFile = Files.exists(clientPath)
+                ? handleFileOverwrite(clientPath, outStream) : clientPath;
+        Files.writeString(destinationClientFile, response.content());
     }
 
     @Override
@@ -141,10 +171,6 @@ public class WsdlCmd implements BLauncherCmd {
         }
     }
 
-    public void setInputPath(List<String> inputPath) {
-        this.inputPath = inputPath;
-    }
-
     @Override
     public void printUsage(StringBuilder out) {
 
@@ -162,46 +188,46 @@ public class WsdlCmd implements BLauncherCmd {
      * @param operations a list of operation names to be generated
      * @throws IOException if reading or writing files fails
      */
-    public void wsdlToBallerina(String fileName, String... operations) throws IOException {
+    public WsdlToBallerinaResponse wsdlToBallerina(String fileName, String outputDirectory,
+                                                   String operation) throws Exception {
         File wsdlFile = new File(fileName);
         Path wsdlFilePath = Paths.get(wsdlFile.getCanonicalPath());
         String fileContent = Files.readString(wsdlFilePath);
-
         WsdlToBallerina wsdlToBallerina = new WsdlToBallerina();
-        wsdlToBallerina.generateFromWSDL(fileContent, operations[0]);
-
-//        writeFile(response.getTypesSource());
-//        writeFile(response.getClientSource());
+        Definition wsdlDefinition = parseWSDLContent(fileContent);
+        return wsdlToBallerina.generateFromWSDL(wsdlDefinition, outputDirectory, operation);
     }
 
-    /**
-     * Writes the generated content to a file, with confirmation for overwriting if the file already exists.
-     *
-     * @param sourceFile generated source file details
-     * @throws IOException if file writing fails
-     */
-    private void writeFile(GeneratedSource sourceFile) throws IOException {
-        File file = new File(sourceFile.fileName());
-        Path filePath = Paths.get(file.getCanonicalPath());
-        System.out.println(filePath);
-        if (file.exists()) {
-            String userInput = System.console().readLine(String.format("The file '%s' already exists." +
-                    " Overwrite? [y/N]: ", sourceFile.fileName()));
-            if (!"y".equalsIgnoreCase(userInput.trim())) {
-                outStream.println("Action canceled: No changes have been made.");
-                return;
-            } else {
-                outStream.println("File " + sourceFile.fileName() + " has been overwritten.");
-            }
+    public static Path handleFileOverwrite(Path destinationFile, PrintStream outStream) {
+        if (!Files.exists(destinationFile)) {
+            return destinationFile;
         }
-
-        try (FileWriter writer = new FileWriter(filePath.toFile(), StandardCharsets.UTF_8)) {
-            writer.write(sourceFile.content());
+        String filePath = destinationFile.toString();
+        outStream.printf(FILE_OVERWRITE_PROMPT, filePath);
+        String response = new Scanner(System.in).nextLine().trim().toLowerCase();
+        if (response.equals("y")) {
+            return destinationFile;
         }
+        int counter = 1;
+        String fileName = new File(filePath).getName();
+        int dotIndex = fileName.lastIndexOf('.');
+        String baseName = dotIndex == -1 ? fileName : fileName.substring(0, dotIndex);
+        String extension = dotIndex == -1 ? EMPTY_STRING : fileName.substring(dotIndex);
+        String parentPath = new File(filePath).getParent() != null ? new File(filePath).getParent() : EMPTY_STRING;
+        while (Files.exists(destinationFile)) {
+            String newFileName = baseName + "." + counter + extension;
+            destinationFile = Path.of(parentPath, newFileName);
+            counter++;
+        }
+        return destinationFile;
     }
 
-    public void setOperations(String operations) {
-        this.operations = operations;
+    private Definition parseWSDLContent(String wsdlDefinitionText) throws WSDLException {
+        WSDLReader reader = WSDLFactory.newInstance().newWSDLReader();
+        reader.setFeature("javax.wsdl.verbose", false);
+        reader.setFeature("javax.wsdl.importDocuments", true);
+        InputStream wsdlStream = new ByteArrayInputStream(wsdlDefinitionText.getBytes(Charset.defaultCharset()));
+        return reader.readWSDL(null, new InputSource(wsdlStream));
     }
 
     private void exitOnError() {
