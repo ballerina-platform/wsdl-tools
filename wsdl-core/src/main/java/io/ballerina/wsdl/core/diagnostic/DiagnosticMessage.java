@@ -58,8 +58,14 @@ public class DiagnosticMessage {
     }
 
     public static DiagnosticMessage wsdlToBallerinaErr100(Object[] args) {
-        return new DiagnosticMessage("WSDL_TO_BALLERINA_100",
+        return new DiagnosticMessage("WSDL_TO_BALLERINA",
                 "Invalid WSDL. Provided WSDL is invalid.", DiagnosticSeverity.ERROR, args);
+    }
+
+    public static DiagnosticMessage wsdlToBallerinaGeneralError(Exception e, Object[] args) {
+        return new DiagnosticMessage("WSDL_TO_BALLERINA",
+                "Error occurred while generating files from the source. " + e.getMessage(),
+                DiagnosticSeverity.ERROR, args);
     }
 
     public static DiagnosticMessage wsdlToBallerinaErr101(Object[] args) {
