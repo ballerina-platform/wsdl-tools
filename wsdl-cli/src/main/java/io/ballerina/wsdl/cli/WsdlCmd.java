@@ -245,11 +245,21 @@ public class WsdlCmd implements BLauncherCmd {
     }
 
     private Definition parseWSDLContent(String wsdlDefinitionText) throws WSDLException {
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream printStream = new PrintStream(outputStream);
+        System.setErr(printStream);
+
         WSDLReader reader = WSDLFactory.newInstance().newWSDLReader();
         reader.setFeature("javax.wsdl.verbose", false);
         reader.setFeature("javax.wsdl.importDocuments", true);
+        System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
         InputStream wsdlStream = new ByteArrayInputStream(wsdlDefinitionText.getBytes(Charset.defaultCharset()));
-        return reader.readWSDL(null, new InputSource(wsdlStream));
+        try {
+            return reader.readWSDL(null, new InputSource(wsdlStream));
+        } finally {
+            System.setErr(originalErr);
+        }
     }
 
     private void exitOnError() {
