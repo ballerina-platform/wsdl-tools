@@ -31,4 +31,5 @@ module io.ballerina.wsdl.core {
     exports io.ballerina.xsd.core.component;
     exports io.ballerina.wsdl.core;
     exports io.ballerina.wsdl.core.generator;
+    exports io.ballerina.wsdl.core.diagnostic;
 }
