@@ -40,6 +40,7 @@ import static io.ballerina.wsdl.core.WsdlToBallerina.CONFIG;
 import static io.ballerina.wsdl.core.WsdlToBallerina.DOT;
 import static io.ballerina.wsdl.core.WsdlToBallerina.EQUALS;
 import static io.ballerina.wsdl.core.WsdlToBallerina.ERROR_OR_NIL;
+import static io.ballerina.wsdl.core.WsdlToBallerina.HEADER;
 import static io.ballerina.wsdl.core.WsdlToBallerina.NEW;
 import static io.ballerina.wsdl.core.WsdlToBallerina.OPEN_BRACES;
 import static io.ballerina.wsdl.core.WsdlToBallerina.OPEN_PARENTHESIS;
@@ -77,15 +78,18 @@ public class Utils {
     }
 
     public static void generateTypeDefinitions(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
-                                               String requestType, String responseType) {
-        generateTypeDefinition(namespace, nodes, SOAP_REQUEST,
-                   REQUEST_BODY + WHITESPACE + BODY_FIELD, true);
-        generateTypeDefinition(EMPTY_STRING, nodes, SOAP_RESPONSE,
-                   RESPONSE_BODY + WHITESPACE + BODY_FIELD, true);
-        generateTypeDefinition(EMPTY_STRING, nodes, RESPONSE_BODY, responseType +
+                                               String requestType, String responseType,
+                                               OperationContext operation) {
+        String requestBody = operation.getRequestBodyName() + WHITESPACE + BODY_FIELD;
+        String requestHeader = operation.getRequestHeaderName() + WHITESPACE + HEADER + QUESTION_MARK + SEMICOLON;
+        generateTypeDefinition(namespace, nodes, operation.getRequestName(),
+                   requestHeader + requestBody, true);
+        generateTypeDefinition(namespace, nodes, operation.getRequestBodyName(), requestType +
+                WHITESPACE + requestType + QUESTION_MARK + SEMICOLON, false);
+        generateTypeDefinition(EMPTY_STRING, nodes, operation.getResponseName(),
+                   operation.getResponseBodyName() + WHITESPACE + BODY_FIELD, true);
+        generateTypeDefinition(EMPTY_STRING, nodes, operation.getResponseBodyName(), responseType +
                                WHITESPACE + responseType + QUESTION_MARK + SEMICOLON, false);
-        generateTypeDefinition(namespace, nodes, REQUEST_BODY, requestType +
-                               WHITESPACE + requestType + QUESTION_MARK + SEMICOLON, false);
     }
 
     private static void generateTypeDefinition(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
