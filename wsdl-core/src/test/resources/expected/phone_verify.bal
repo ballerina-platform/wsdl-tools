@@ -11,7 +11,7 @@ public isolated client class Client {
         return;
     }
 
-    remote isolated function CheckPhoneNumber(SoapRequest envelope) returns SoapResponse|error {
+    remote isolated function checkPhoneNumber(CheckPhoneNumberSoapRequest envelope) returns CheckPhoneNumberSoapResponse|error {
         xml result = check self.clientEp->sendReceive(check xmldata:toXml(envelope), "http://ws.cdyne.com/PhoneVerify/query/CheckPhoneNumber");
         return xmldata:parseAsType(result);
     }

@@ -11,7 +11,7 @@ public isolated client class Client {
         return;
     }
 
-    remote isolated function DescriptiveContent_SubmitRequest(SoapRequest envelope) returns SoapResponse|error {
+    remote isolated function descriptiveContentSubmitRequest(DescriptiveContent_SubmitRequestSoapRequest envelope) returns DescriptiveContent_SubmitRequestSoapResponse|error {
         xml result = check self.clientEp->sendReceive(check xmldata:toXml(envelope), "http://htng.org/PWSWG/2010/12/DescriptiveContent_SubmitRequest");
         return xmldata:parseAsType(result);
     }

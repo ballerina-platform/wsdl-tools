@@ -11,7 +11,7 @@ public isolated client class Client {
         return;
     }
 
-    remote isolated function Multiply(SoapRequest envelope) returns SoapResponse|error {
+    remote isolated function multiply(MultiplySoapRequest envelope) returns MultiplySoapResponse|error {
         xml result = check self.clientEp->sendReceive(check xmldata:toXml(envelope), "http://tempuri.org/Multiply");
         return xmldata:parseAsType(result);
     }
