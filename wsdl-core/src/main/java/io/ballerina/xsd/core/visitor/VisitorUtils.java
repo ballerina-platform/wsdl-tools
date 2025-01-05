@@ -84,6 +84,7 @@ public final class VisitorUtils {
     public static final String PREFIX = "prefix";
     public static final String URI = "uri";
     public static final String DURATION = "duration";
+    public static final String UNDERSCORE = "_";
 
     public static String addNamespace(XSDVisitorImpl xsdVisitor, String namespace) {
         xsdVisitor.addImports(BALLERINA_XML_DATA_MODULE);
@@ -205,6 +206,7 @@ public final class VisitorUtils {
         if (pascalCase == null || pascalCase.isEmpty()) {
             return pascalCase;
         }
+        pascalCase = pascalCase.replace(UNDERSCORE, EMPTY_STRING);
         return Character.toLowerCase(pascalCase.charAt(0)) + pascalCase.substring(1);
     }
 
@@ -214,11 +216,11 @@ public final class VisitorUtils {
             return input;
         }
         if (input.matches("^\\d.*")) {
-            input = "_" + input;
+            input = UNDERSCORE + input;
         }
         String keyPart = input.toLowerCase(Locale.ROOT);
         for (String s : Arrays.asList("[/\\\\]", "\\s", "[!@$%^&*()_\\-|]")) {
-            keyPart = keyPart.replaceAll(s, "_");
+            keyPart = keyPart.replaceAll(s, UNDERSCORE);
         }
         return keyPart + " = \"" + input + "\"";
     }
