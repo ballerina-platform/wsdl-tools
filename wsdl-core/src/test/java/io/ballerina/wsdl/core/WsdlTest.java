@@ -19,13 +19,17 @@
 package io.ballerina.wsdl.core;
 
 import io.ballerina.wsdl.cli.WsdlCmd;
+import io.ballerina.wsdl.core.diagnostic.WsdlToBallerinaDiagnostic;
+import io.ballerina.xsd.core.XSDToRecord;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testng.Assert;
+import org.w3c.dom.Document;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class WsdlTest {
@@ -37,7 +41,8 @@ public class WsdlTest {
         return Stream.of(
                 new Object[] {"calculator.xml", "calculator.bal", "http://tempuri.org/Multiply"},
                 new Object[] {"phone_verify.wsdl", "phone_verify.bal", "http://ws.cdyne.com/PhoneVerify/query/CheckPhoneNumber"},
-                new Object[] {"OTA2010A.svc.wsdl", "OTA2010A.svc.bal", "http://htng.org/PWSWG/2010/12/DescriptiveContent_SubmitRequest"}
+                new Object[] {"OTA2010A.svc.wsdl", "OTA2010A.svc.bal", "http://htng.org/PWSWG/2010/12" +
+                        "/DescriptiveContent_SubmitRequest"}
         );
     }
 
@@ -50,9 +55,34 @@ public class WsdlTest {
 
     private void validate(Path sample, Path expected, String operationAction) throws Exception {
         WsdlCmd wsdlCmd = new WsdlCmd();
-        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(sample), "", operationAction);
+        String[] operationActions = new String[]{operationAction};
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(sample), "", operationActions);
         String result = response.getClientSource().content();
         String expectedValue = Files.readString(expected);
         Assert.assertEquals(result, expectedValue);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testParserError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "invalid_wsdl_spec.xml")), "", new String[]{});
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
+                "WSDLException: faultCode=PARSER_ERROR: Problem parsing - WSDL Document -.: " +
+                "org.xml.sax.SAXParseException: The element type \"wsdl:types\" must be terminated by the " +
+                "matching end-tag \"</wsdl:types>\".";
+        Assert.assertEquals(result.get(0).toString(), expectedError);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testEmptySchemaError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "empty_schema_file.xml")), "", new String[]{});
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
+                "Could not find <wsdl:types> in the file";
+        Assert.assertEquals(result.get(0).toString(), expectedError);
     }
 }
