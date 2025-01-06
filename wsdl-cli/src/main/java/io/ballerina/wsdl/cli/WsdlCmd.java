@@ -93,8 +93,8 @@ public class WsdlCmd implements BLauncherCmd {
     public static final String INVALID_BALLERINA_DIRECTORY_ERROR =
             "Invalid Ballerina package directory: %s, cannot find 'Ballerina.toml' file";
 
-    @CommandLine.Option(names = {"-o", "--output"}, description = "Destination file path of the generated types from " +
-            "the WSDL file")
+    @CommandLine.Option(names = {"-m", "--module"}, description = "The name of the module in which the Ballerina " +
+            "client and record types are generated.")
     private String outputPath = "";
 
     public WsdlCmd() {
@@ -118,7 +118,14 @@ public class WsdlCmd implements BLauncherCmd {
             exitOnError();
             return;
         }
-        Path outputDirPath = Path.of(outputPath);
+        Path basePath = Paths.get("modules").toAbsolutePath();
+        Path outputDirPath = basePath.resolve(outputPath).normalize();
+
+        if (!outputDirPath.startsWith(basePath)) {
+            System.out.printf("Invalid output path: Path traversal detected in '%s'%n", outputPath);
+            exitOnError();
+            return;
+        }
         if (Files.exists(outputDirPath) && !Files.isDirectory(outputDirPath)) {
             outStream.printf((INVALID_DIRECTORY_PATH) + "%n", outputPath);
             exitOnError();
@@ -130,14 +137,14 @@ public class WsdlCmd implements BLauncherCmd {
             return;
         }
         try {
-            if (Files.notExists(Path.of(outputPath))) {
-                Files.createDirectories(Path.of(outputPath));
+            if (Files.notExists(outputDirPath)) {
+                Files.createDirectories(outputDirPath);
             }
             if (!Files.exists(Path.of(inputPath.get(0)))) {
                 outStream.println(inputPath.get(0) + " file does not exist.");
                 return;
             }
-            WsdlToBallerinaResponse response = wsdlToBallerina(inputPath.get(0), outputPath, operations);
+            WsdlToBallerinaResponse response = wsdlToBallerina(inputPath.get(0), outputDirPath.toString(), operations);
             if (!response.getDiagnostics().isEmpty()) {
                 response.getDiagnostics().forEach(diagnostic ->
                         outStream.println(ERROR_DIAGNOSTIC + diagnostic.getSeverity() +
@@ -146,7 +153,7 @@ public class WsdlCmd implements BLauncherCmd {
             }
             writeSourceToFiles(response.getTypesSource());
             writeSourceToFiles(response.getClientSource());
-            outStream.printf((SUCCESSFUL_MESSAGE) + "%n", Path.of(outputPath).toAbsolutePath());
+            outStream.printf((SUCCESSFUL_MESSAGE) + "%n", outputDirPath.toAbsolutePath());
         } catch (WSDLException e) {
             // Keep this empty to avoid duplicating the error message
         } catch (Exception e) {
