@@ -20,11 +20,9 @@ package io.ballerina.wsdl.core;
 
 import io.ballerina.wsdl.cli.WsdlCmd;
 import io.ballerina.wsdl.core.diagnostic.WsdlToBallerinaDiagnostic;
-import io.ballerina.xsd.core.XSDToRecord;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testng.Assert;
-import org.w3c.dom.Document;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,23 +38,29 @@ public class WsdlTest {
     private static Stream<Object[]> provideTestPaths() {
         return Stream.of(
                 new Object[] {"calculator.xml", "calculator.bal", "http://tempuri.org/Multiply"},
-                new Object[] {"phone_verify.wsdl", "phone_verify.bal", "http://ws.cdyne.com/PhoneVerify/query/CheckPhoneNumber"},
-                new Object[] {"OTA2010A.svc.wsdl", "OTA2010A.svc.bal", "http://htng.org/PWSWG/2010/12" +
-                        "/DescriptiveContent_SubmitRequest"}
+                new Object[] {"calculator.xml", "calculator_with_multiple_operations.bal",
+                        "http://tempuri.org/Multiply, http://tempuri.org/Add"},
+                new Object[] {"phone_verify.wsdl", "phone_verify.bal",
+                        "http://ws.cdyne.com/PhoneVerify/query/CheckPhoneNumber"},
+                new Object[] {"OTA2010A.svc.wsdl", "OTA2010A.svc.bal",
+                        "http://htng.org/PWSWG/2010/12/DescriptiveContent_SubmitRequest"},
+                new Object[] {"ecommerce_service.wsdl", "ecommerce_service.bal",
+                        "http://example.com/ecommerce/GetProduct"},
+                new Object[] {"global_weather.wsdl", "global_weather.bal", "http://www.webserviceX.NET/GetWeather"}
         );
     }
 
     @ParameterizedTest
     @MethodSource("provideTestPaths")
-    void testWsdlToRecord(String xmlFilePath, String balFilePath, String operationAction) throws Exception {
+    void testWsdlToRecord(String xmlFilePath, String balFilePath, String operationActions) throws Exception {
         validate(RES_DIR.resolve(WSDL_DIR).resolve(xmlFilePath), RES_DIR.resolve(EXPECTED_DIR).resolve(balFilePath),
-                operationAction);
+                operationActions.split(","));
     }
 
-    private void validate(Path sample, Path expected, String operationAction) throws Exception {
+    private void validate(Path sample, Path expected, String[] operationActions) throws Exception {
         WsdlCmd wsdlCmd = new WsdlCmd();
-        String[] operationActions = new String[]{operationAction};
-        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(sample), "", operationActions);
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(sample),
+                "", operationActions);
         String result = response.getClientSource().content();
         String expectedValue = Files.readString(expected);
         Assert.assertEquals(result, expectedValue);
@@ -66,12 +70,11 @@ public class WsdlTest {
     void testParserError() throws Exception {
         WsdlCmd wsdlCmd = new WsdlCmd();
         WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
-                "invalid_wsdl_spec.xml")), "", new String[]{});
+                "invalid_wsdl_spec.wsdl")), "", new String[]{});
         List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
-        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
-                "WSDLException: faultCode=PARSER_ERROR: Problem parsing - WSDL Document -.: " +
-                "org.xml.sax.SAXParseException: The element type \"wsdl:types\" must be terminated by the " +
-                "matching end-tag \"</wsdl:types>\".";
+        String expectedError = "[ERROR] Error occurred while parsing the wsdl content. WSDLException: " +
+                "faultCode=PARSER_ERROR: Problem parsing - WSDL Document -.: org.xml.sax.SAXParseException: " +
+                "The element type \"wsdl:types\" must be terminated by the matching end-tag \"</wsdl:types>\".";
         Assert.assertEquals(result.get(0).toString(), expectedError);
     }
 
@@ -79,10 +82,95 @@ public class WsdlTest {
     void testEmptySchemaError() throws Exception {
         WsdlCmd wsdlCmd = new WsdlCmd();
         WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
-                "empty_schema_file.xml")), "", new String[]{});
+                "empty_schema_file.wsdl")), "", new String[]{"http://tempuri.org/multiply"});
         List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
         String expectedError = "[ERROR] Error occurred while generating files from the source. " +
                 "Could not find <wsdl:types> in the file";
+        Assert.assertEquals(result.get(0).toString(), expectedError);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testInvalidOperationError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        String invalidOperation = "http://tempuri.org/multiply";
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "invalid_operation.wsdl")), "", new String[]{invalidOperation});
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
+                "WSDL operation is not found: " + invalidOperation;
+        Assert.assertEquals(result.get(0).toString(), expectedError);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testInvalidMultipleOperationsError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        String[] invalidOperation = ("http://tempuri.org/Multiply, http://tempuri.org/add").split(",");
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "invalid_operation.wsdl")), "", invalidOperation);
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
+                "WSDL operation is not found: http://tempuri.org/add";
+        Assert.assertEquals(result.get(0).toString(), expectedError);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testOperationInputError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        String invalidOperation = "http://tempuri.org/Add";
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "invalid_operation_input.wsdl")), "", new String[]{invalidOperation});
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while parsing the wsdl content. " +
+                "WSDLException (at /wsdl:definitions/wsdl:binding[1]/wsdl:operation[1]/wsdl:input): " +
+                "faultCode=INVALID_WSDL: Encountered illegal extension attribute message. " +
+                "Extension attributes must be in a namespace other than WSDLs.";
+        Assert.assertEquals(result.get(0).toString(), expectedError);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testInvalidHeaderError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        String invalidOperation = "http://tempuri.org/Add";
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "empty_header.wsdl")), "", new String[]{invalidOperation});
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
+                "Message element is missing in the <soap:header> for \"Security\" element";
+        Assert.assertEquals(result.get(0).toString(), expectedError);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testInvalidBindingInputError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        String invalidOperation = "http://tempuri.org/Add";
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "invalid_binding_input.wsdl")), "", new String[]{invalidOperation});
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
+                "Invalid binding operation: Binding input is null.";
+        Assert.assertEquals(result.get(0).toString(), expectedError);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testInvalidBindingOutputError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        String invalidOperation = "http://tempuri.org/Add";
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "invalid_binding_output.wsdl")), "", new String[]{invalidOperation});
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
+                "Invalid binding operation: Binding output is null.";
+        Assert.assertEquals(result.get(0).toString(), expectedError);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testEmptyElementError() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "empty_message_element.wsdl")), "", new String[]{});
+        List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
+        String expectedError = "[ERROR] Error occurred while generating files from the source. " +
+                "Message element is missing in the input/output of the operation: multiply";
         Assert.assertEquals(result.get(0).toString(), expectedError);
     }
 }
