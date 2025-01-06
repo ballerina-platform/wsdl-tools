@@ -23,7 +23,6 @@ import io.ballerina.wsdl.core.WsdlToBallerina;
 import io.ballerina.wsdl.core.WsdlToBallerinaResponse;
 import io.ballerina.wsdl.core.diagnostic.DiagnosticMessage;
 import io.ballerina.wsdl.core.diagnostic.DiagnosticUtils;
-import io.ballerina.wsdl.core.diagnostic.WsdlToBallerinaDiagnostic;
 import io.ballerina.wsdl.core.generator.GeneratedSource;
 import org.xml.sax.InputSource;
 import picocli.CommandLine;
@@ -32,7 +31,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -72,7 +70,6 @@ public class WsdlCmd implements BLauncherCmd {
     private static final String COMMAND_IDENTIFIER = "ballerina-wsdl";
     public static final String FILE_OVERWRITE_PROMPT = "The file '%s' already exists." +
             " Overwrite? [y/N]: ";
-    public static final String MISSING_OPERATION_ERROR = "Error: Operation name is required to generate the client";
     public static final String SUCCESSFUL_MESSAGE = "Output is successfully written to %s";
     public static final String ERROR_DIAGNOSTIC = "Error - ";
     private static final String AUTO_GENERATED_MESSAGE = "// AUTO-GENERATED FILE. DO NOT MODIFY.\n" +
@@ -213,10 +210,11 @@ public class WsdlCmd implements BLauncherCmd {
      *
      * @param fileName   the path to the WSDL file
      * @param operations a list of operation names to be generated
-     * @throws IOException if reading or writing files fails
+     * @throws WSDLException if generating content from the source fails
      */
     public WsdlToBallerinaResponse wsdlToBallerina(String fileName, String outputDirectory,
-                                                   String[] operations) throws WSDLException, IOException {
+                                                   String[] operations) throws WSDLException {
+        DiagnosticMessage message;
         WsdlToBallerinaResponse response = new WsdlToBallerinaResponse();
         List<DiagnosticMessage> diagnosticMessages = new ArrayList<>();
         try {
@@ -227,11 +225,15 @@ public class WsdlCmd implements BLauncherCmd {
             Definition wsdlDefinition = parseWSDLContent(fileContent);
             wsdlToBallerina.generateFromWSDL(response, wsdlDefinition, outputDirectory, diagnosticMessages, operations);
             return response;
+        } catch (IOException e) {
+            message = DiagnosticMessage.wsdlToBallerinaIOError(e, null);
+        } catch (WSDLException e) {
+            message = DiagnosticMessage.wsdlToBallerinaParserError(e, null);
         } catch (Exception e) {
-            DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaGeneralError(e, null);
-            diagnosticMessages.add(message);
-            return DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
+            message = DiagnosticMessage.wsdlToBallerinaGeneralError(e, null);
         }
+        diagnosticMessages.add(message);
+        return DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
     }
 
     public static Path handleFileOverwrite(Path destinationFile, PrintStream outStream) {
