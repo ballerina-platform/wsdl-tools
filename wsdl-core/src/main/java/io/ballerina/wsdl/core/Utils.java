@@ -78,18 +78,18 @@ public class Utils {
     }
 
     public static void generateTypeDefinitions(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
-                                               String requestType, String responseType,
-                                               OperationContext operation) {
+                                               String requestType, String requestFieldName, String responseType,
+                                               String responseFieldName, OperationContext operation) {
         String requestBody = operation.getRequestBodyName() + WHITESPACE + BODY_FIELD;
         String requestHeader = operation.getRequestHeaderName() + WHITESPACE + HEADER + QUESTION_MARK + SEMICOLON;
         generateTypeDefinition(namespace, nodes, operation.getRequestName(),
                    requestHeader + requestBody, true);
         generateTypeDefinition(namespace, nodes, operation.getRequestBodyName(), requestType +
-                WHITESPACE + requestType + QUESTION_MARK + SEMICOLON, false);
+                WHITESPACE + requestFieldName + QUESTION_MARK + SEMICOLON, false);
         generateTypeDefinition(EMPTY_STRING, nodes, operation.getResponseName(),
                    operation.getResponseBodyName() + WHITESPACE + BODY_FIELD, true);
         generateTypeDefinition(EMPTY_STRING, nodes, operation.getResponseBodyName(), responseType +
-                               WHITESPACE + responseType + QUESTION_MARK + SEMICOLON, false);
+                               WHITESPACE + responseFieldName + QUESTION_MARK + SEMICOLON, false);
     }
 
     private static void generateTypeDefinition(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
