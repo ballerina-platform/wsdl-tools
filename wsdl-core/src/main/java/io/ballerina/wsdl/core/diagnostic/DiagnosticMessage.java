@@ -57,19 +57,25 @@ public class DiagnosticMessage {
         return Objects.requireNonNullElse(this.args, new Object[0]).clone();
     }
 
-    public static DiagnosticMessage wsdlToBallerinaErr100(Object[] args) {
-        return new DiagnosticMessage("WSDL_TO_BALLERINA",
+    public static DiagnosticMessage wsdlToBallerinaError(Object[] args) {
+        return new DiagnosticMessage("Error",
                 "Invalid WSDL. Provided WSDL is invalid.", DiagnosticSeverity.ERROR, args);
     }
 
-    public static DiagnosticMessage wsdlToBallerinaGeneralError(Exception e, Object[] args) {
-        return new DiagnosticMessage("WSDL_TO_BALLERINA",
-                "Error occurred while generating files from the source. " + e.getMessage(),
+    public static DiagnosticMessage wsdlToBallerinaIOError(Exception e, Object[] args) {
+        return new DiagnosticMessage("I/O Error",
+                "Error occurred while reading the source file.", DiagnosticSeverity.ERROR, args);
+    }
+
+    public static DiagnosticMessage wsdlToBallerinaParserError(Exception e, Object[] args) {
+        return new DiagnosticMessage("PARSER_ERROR",
+                "Error occurred while parsing the wsdl content. " + e.getMessage(),
                 DiagnosticSeverity.ERROR, args);
     }
 
-    public static DiagnosticMessage wsdlToBallerinaErr101(Object[] args) {
-        return new DiagnosticMessage("WSDL_TO_BALLERINA_101",
-                "Error occurred while formatting the Ballerina syntax tree.", DiagnosticSeverity.ERROR, args);
+    public static DiagnosticMessage wsdlToBallerinaGeneralError(Exception e, Object[] args) {
+        return new DiagnosticMessage("Error",
+                "Error occurred while generating files from the source. " + e.getMessage(),
+                DiagnosticSeverity.ERROR, args);
     }
 }
