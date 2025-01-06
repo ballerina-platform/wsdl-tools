@@ -77,6 +77,8 @@ import static io.ballerina.xsd.core.XSDToRecord.processNameResolvers;
 import static io.ballerina.xsd.core.XSDToRecord.processNestedElements;
 import static io.ballerina.xsd.core.XSDToRecord.processRootElements;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.convertToCamelCase;
+import static io.ballerina.xsd.core.visitor.VisitorUtils.deriveType;
+import static io.ballerina.xsd.core.visitor.VisitorUtils.isSimpleType;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.TYPE;
@@ -153,7 +155,7 @@ public class WsdlToBallerina {
             this.wsdlDefinition = wsdlDefinition;
             WsdlService wsdlService = getSoapService(wsdlDefinition);
             if (wsdlService == null) {
-                DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaErr100(null);
+                DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaError(null);
                 diagnosticMessages.add(message);
                 DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
                 return;
@@ -168,7 +170,7 @@ public class WsdlToBallerina {
             }
             generateFiles(filteredWSDLOperations, response, wsdlOperations, types, outputDirectory);
         } catch (WSDLException e) {
-            DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaErr100(null);
+            DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaError(null);
             diagnosticMessages.add(message);
         } catch (Exception e) {
             DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaGeneralError(e, null);
@@ -177,13 +179,13 @@ public class WsdlToBallerina {
         DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
     }
 
-    public static Header extractHeader(Definition wsdlDefinition, QName messageName, String elementName) {
-        if (wsdlDefinition == null || messageName == null) {
-            throw new IllegalArgumentException("WSDL Definition and Message QName cannot be null.");
+    public static Header extractHeader(Definition wsdlDefinition, QName headerName, String elementName) {
+        if (headerName == null) {
+            throw new IllegalArgumentException("Header element name cannot be extracted.");
         }
-        Message message = (Message) wsdlDefinition.getMessages().get(messageName);
+        Message message = (Message) wsdlDefinition.getMessages().get(headerName);
         if (message == null) {
-            throw new IllegalArgumentException("Message not found in the WSDL Definition: " + messageName);
+            throw new IllegalArgumentException("Header element is not found in the WSDL Definition: " + headerName);
         }
         Part partObj = (Part) message.getParts().get(elementName);
         QName element = partObj.getElementName();
@@ -200,7 +202,7 @@ public class WsdlToBallerina {
             }
         } else {
             for (String operationName : filteredWSDLOperations) {
-                WsdlOperation operation = validateAndRetrieveOperation(operationName, wsdlOperations);
+                WsdlOperation operation = validateAndRetrieveOperation(operationName.strip(), wsdlOperations);
                 operations.add(operation);
             }
         }
@@ -230,10 +232,17 @@ public class WsdlToBallerina {
     }
 
     private void generateEnvelopeTypes(WsdlOperation operation, Map<String, ModuleMemberDeclarationNode> nodes) {
-        String requestType = getElementLocalPart(operation.getOperationInput(), wsdlDefinition);
-        String responseType = getElementLocalPart(operation.getOperationOutput(), wsdlDefinition);
+        String requestType = getElementType(operation.getOperationInput(), wsdlDefinition, nodes);
+        String requestFieldName = isSimpleType(requestType)
+                ? getElementName(operation.getOperationInput(), wsdlDefinition, nodes)
+                : requestType;
+        String responseType = getElementType(operation.getOperationOutput(), wsdlDefinition, nodes);
+        String responseFieldName = isSimpleType(responseType)
+                ? getElementName(operation.getOperationOutput(), wsdlDefinition, nodes)
+                : responseType;
         OperationContext operationContext = new OperationContext(operation.getOperationName());
-        Utils.generateTypeDefinitions(soapNamespace, nodes, requestType, responseType, operationContext);
+        Utils.generateTypeDefinitions(soapNamespace, nodes, requestType, requestFieldName, responseType,
+                responseFieldName, operationContext);
         ModuleMemberDeclarationNode headerNode = generateHeaderNode(operation);
         nodes.put(operation.getOperationName() + HEADER, headerNode);
     }
@@ -347,7 +356,8 @@ public class WsdlToBallerina {
         generateNodes(schemaElement, nodes, xsdVisitor);
     }
 
-    private String getElementLocalPart(String messageName, Definition wsdlDefinition) {
+    private String getElementType(String messageName, Definition wsdlDefinition,
+                                  Map<String, ModuleMemberDeclarationNode> nodes) {
         QName qName = new QName(wsdlDefinition.getTargetNamespace(), messageName);
         MessageImpl message = (MessageImpl) wsdlDefinition.getMessages().get(qName);
         if (message == null) {
@@ -358,7 +368,27 @@ public class WsdlToBallerina {
             throw new IllegalStateException("No parts found for message: " + messageName);
         }
         String firstPartKey = parts.keySet().iterator().next();
+        if (parts.get(firstPartKey).getTypeName() != null) {
+            String requestType = parts.get(firstPartKey).getTypeName().getLocalPart();
+            if (nodes.containsKey(requestType) || isSimpleType(requestType)) {
+                return parts.get(firstPartKey).getTypeName().getLocalPart();
+            }
+        }
         return parts.get(firstPartKey).getElementName().getLocalPart();
+    }
+
+    private String getElementName(String messageName, Definition wsdlDefinition,
+                                  Map<String, ModuleMemberDeclarationNode> nodes) {
+        QName qName = new QName(wsdlDefinition.getTargetNamespace(), messageName);
+        MessageImpl message = (MessageImpl) wsdlDefinition.getMessages().get(qName);
+        if (message == null) {
+            throw new IllegalArgumentException("Message not found: " + messageName);
+        }
+        Map<String, PartImpl> parts = message.getParts();
+        if (parts.isEmpty()) {
+            throw new IllegalStateException("No parts found for message: " + messageName);
+        }
+        return parts.keySet().iterator().next();
     }
 
 
@@ -406,20 +436,28 @@ public class WsdlToBallerina {
         SchemaHandler.getInstance().initializeSchemas(targetNSToSchema);
     }
 
-    private Map<String, WsdlOperation> getWSDLOperations() {
+    private Map<String, WsdlOperation> getWSDLOperations() throws Exception {
         Map<String, WsdlOperation> wsdlOperations = new HashMap<>();
         for (Object op : soapPort.getBinding().getBindingOperations()) {
             BindingOperation bindingOperation = (BindingOperation) op;
             WsdlOperation wsdlOperation = getWsdlOperation(bindingOperation);
+            if (bindingOperation.getBindingInput() == null) {
+                throw new Exception("Invalid binding operation: Binding input is null.");
+            } else if (bindingOperation.getBindingOutput() == null) {
+                throw new Exception("Invalid binding operation: Binding output is null.");
+            }
             String inputPayload = bindingOperation.getBindingInput().getName();
             String outputPayload = bindingOperation.getBindingOutput().getName();
             List<String> headerParts = new ArrayList<>();
             String inputHeaderName = generateSOAPInputHeaderParts(bindingOperation, headerParts, soapVersion);
-
+            if (bindingOperation.getOperation().getInput().getMessage() == null
+                    || bindingOperation.getOperation().getOutput().getMessage() == null) {
+                throw new Exception("Message element is missing in the input/output of the operation: " +
+                        bindingOperation.getOperation().getName());
+            }
             inputPayload = (inputPayload == null)
                     ? bindingOperation.getOperation().getInput().getMessage().getQName().getLocalPart()
                     : inputPayload;
-
             outputPayload = (outputPayload == null)
                     ? bindingOperation.getOperation().getOutput().getMessage().getQName().getLocalPart()
                     : outputPayload;
@@ -437,28 +475,42 @@ public class WsdlToBallerina {
         return wsdlOperations;
     }
 
-    public static String generateSOAPInputHeaderParts(BindingOperation bindingOperation,
-                                                      List<String> partElements, SoapVersion soapVersion) {
+    public static String generateSOAPInputHeaderParts(BindingOperation bindingOperation, List<String> partElements,
+                                                      SoapVersion soapVersion) throws Exception {
+        if (bindingOperation == null || bindingOperation.getBindingInput() == null) {
+            throw new Exception("Invalid binding operation: Binding input is null.");
+        }
         List<?> extensibilityElements = bindingOperation.getBindingInput().getExtensibilityElements();
-        String inputHeaderName = "";
-        for (Object obj : extensibilityElements) {
-            if (soapVersion.equals(SoapVersion.SOAP12) && obj instanceof SOAP12HeaderImpl soapHeader) {
-                String part = soapHeader.getPart();
-                if (part != null) {
-                    partElements.add(part);
-                    inputHeaderName = soapHeader.getMessage().getLocalPart();
+        String headerMessageName = "";
+        for (Object element : extensibilityElements) {
+            if (element == null) {
+                continue;
+            }
+            if (soapVersion.equals(SoapVersion.SOAP12) && element instanceof SOAP12HeaderImpl soap12Header) {
+                String partName = soap12Header.getPart();
+                if (partName == null) {
+                    continue;
                 }
-            } else {
-                if (soapVersion.equals(SoapVersion.SOAP11) && obj instanceof SOAPHeaderImpl soapHeader) {
-                    String part = soapHeader.getPart();
-                    if (part != null) {
-                        partElements.add(part);
-                        inputHeaderName = soapHeader.getMessage().getLocalPart();
-                    }
+                partElements.add(partName);
+                if (soap12Header.getMessage() == null) {
+                    throw new Exception("Message element is missing in the <soap:header> for " +
+                            "\"" + partName + "\" element");
                 }
+                headerMessageName = soap12Header.getMessage().getLocalPart();
+            } else if (soapVersion.equals(SoapVersion.SOAP11) && element instanceof SOAPHeaderImpl soap11Header) {
+                String partName = soap11Header.getPart();
+                if (partName == null) {
+                    continue;
+                }
+                partElements.add(partName);
+                if (soap11Header.getMessage() == null) {
+                    throw new Exception("Message element is missing in the <soap:header> for " +
+                            "\"" + partName + "\" element");
+                }
+                headerMessageName = soap11Header.getMessage().getLocalPart();
             }
         }
-        return inputHeaderName;
+        return headerMessageName;
     }
 
     private WsdlOperation getWsdlOperation(BindingOperation bindingOperation) {
