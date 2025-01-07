@@ -35,7 +35,7 @@ public interface XSDVisitor {
     String visit(Element element, boolean isSubType) throws Exception;
     String visit(ComplexType element) throws Exception;
     String visit(ComplexType element, boolean isSubType) throws Exception;
-    String visit(SimpleType element);
+    String visit(SimpleType element) throws Exception;
     void setTargetNamespace(String targetNamespace);
     String getTargetNamespace();
     ArrayList<String> getImports();
