@@ -64,18 +64,18 @@ public class DiagnosticMessage {
 
     public static DiagnosticMessage wsdlToBallerinaIOError(Exception e, Object[] args) {
         return new DiagnosticMessage("I/O Error",
-                "Error occurred while reading the source file.", DiagnosticSeverity.ERROR, args);
+                "Failed to read the source file.", DiagnosticSeverity.ERROR, args);
     }
 
     public static DiagnosticMessage wsdlToBallerinaParserError(Exception e, Object[] args) {
         return new DiagnosticMessage("PARSER_ERROR",
-                "Error occurred while parsing the wsdl content. " + e.getMessage(),
+                "Failed to parse the WSDL content. " + e.getMessage(),
                 DiagnosticSeverity.ERROR, args);
     }
 
     public static DiagnosticMessage wsdlToBallerinaGeneralError(Exception e, Object[] args) {
         return new DiagnosticMessage("Error",
-                "Error occurred while generating files from the source. " + e.getMessage(),
+                "Failed to generate files from the source. " + e.getMessage(),
                 DiagnosticSeverity.ERROR, args);
     }
 }
