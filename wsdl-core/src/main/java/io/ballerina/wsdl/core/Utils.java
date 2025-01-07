@@ -59,8 +59,6 @@ import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
 public class Utils {
     private static final String XMLDATA_NAME = "@xmldata:Name {value: \"Envelope\"}\n";
     private static final String PUBLIC_TYPE = "public type ";
-    private static final String RECORD_START = " record {|";
-    private static final String RECORD_END = "|};\n";
     private static final String BODY_FIELD = "Body?;";
     public static final String XMLDATA_NAMESPACE = "@xmldata:Namespace {prefix: \"s\", uri: \"%s\"}\n";
     public static final String SOAP_REQUEST = "SoapRequest";
@@ -68,6 +66,7 @@ public class Utils {
     public static final String SOAP_RESPONSE = "SoapResponse";
     public static final String RESPONSE_BODY = "ResponseBody";
     public static final String LINE_BREAK = "\n";
+    public static final String QUOTATION = "\"";
 
     public static String formatModuleParts(ModulePartNode modulePartNode) throws FormatterException {
         ForceFormattingOptions forceFormattingOptions = ForceFormattingOptions.builder()
@@ -107,7 +106,7 @@ public class Utils {
         nodes.put(typeName, NodeParser.parseModuleMemberDeclaration(builder.toString()));
     }
 
-    public static StringBuilder generateClientContext(String soapVersion) {
+    public static StringBuilder generateClientContext(String soapVersion, String serviceUrl) {
         StringBuilder stringBuilder = new StringBuilder();
         String version = soapVersion.toLowerCase(Locale.ROOT);
         stringBuilder.append(WsdlToBallerina.PUBLIC).append(WHITESPACE).append(WsdlToBallerina.ISOLATED)
@@ -122,7 +121,8 @@ public class Utils {
         stringBuilder.append(WsdlToBallerina.PUBLIC).append(WHITESPACE).append(WsdlToBallerina.ISOLATED)
                 .append(WHITESPACE).append(WsdlToBallerina.FUNCTION).append(WHITESPACE).append(WsdlToBallerina.INIT)
                 .append(OPEN_PARENTHESIS).append(WsdlToBallerina.STRING).append(WHITESPACE)
-                .append(SERVICE_URL).append(COMMA).append(TYPE_INCLUSION)
+                .append(SERVICE_URL).append(WHITESPACE).append(EQUALS).append(WHITESPACE)
+                .append(QUOTATION + serviceUrl + QUOTATION).append(COMMA).append(TYPE_INCLUSION)
                 .append(SOAP).append(WsdlToBallerina.COLON).append(CLIENT_CONFIG).append(WHITESPACE)
                 .append(CONFIG).append(CLOSE_PARENTHESIS).append(WHITESPACE).append(RETURNS).append(WHITESPACE)
                 .append(ERROR_OR_NIL).append(WHITESPACE).append(OPEN_BRACES).append(WHITESPACE);
