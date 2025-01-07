@@ -41,7 +41,7 @@ public class SimpleType implements XSDComponent {
     }
 
     @Override
-    public String accept(XSDVisitor xsdVisitor) {
+    public String accept(XSDVisitor xsdVisitor) throws Exception {
         return xsdVisitor.visit(this);
     }
 
