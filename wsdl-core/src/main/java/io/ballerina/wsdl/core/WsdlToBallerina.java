@@ -291,7 +291,8 @@ public class WsdlToBallerina {
     private static ModulePartNode getClientModulePartNode(StringBuilder stringBuilder,
                                                           ArrayList<WsdlOperation> operations, String soapVersion) {
         for (WsdlOperation operation: operations) {
-            String functionCode = buildRemoteFunctionCode(operation.getOperationName(), operation.getOperationAction());
+            String functionCode = buildRemoteFunctionCode(operation.getOperationName(), 
+                                                          operation.getOperationAction());
             stringBuilder.append(functionCode);
         }
         stringBuilder.append(CLOSE_BRACES);
