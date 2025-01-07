@@ -42,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 import javax.wsdl.Definition;
@@ -115,13 +116,15 @@ public class WsdlCmd implements BLauncherCmd {
             exitOnError();
             return;
         }
-        Path basePath = Paths.get("modules").toAbsolutePath();
-        Path outputDirPath = basePath.resolve(outputPath).normalize();
-
-        if (!outputDirPath.startsWith(basePath)) {
-            System.out.printf("Invalid output path: Path traversal detected in '%s'%n", outputPath);
-            exitOnError();
-            return;
+        Path outputDirPath = Paths.get(outputPath);
+        if (!Objects.equals(outputPath, EMPTY_STRING)) {
+            Path basePath = Paths.get("modules").toAbsolutePath();
+            outputDirPath = basePath.resolve(outputPath).normalize();
+            if (!outputDirPath.startsWith(basePath)) {
+                System.out.printf("Invalid output path: Path traversal detected in '%s'%n", outputPath);
+                exitOnError();
+                return;
+            }
         }
         if (Files.exists(outputDirPath) && !Files.isDirectory(outputDirPath)) {
             outStream.printf((INVALID_DIRECTORY_PATH) + "%n", outputPath);
@@ -144,8 +147,7 @@ public class WsdlCmd implements BLauncherCmd {
             WsdlToBallerinaResponse response = wsdlToBallerina(inputPath.get(0), outputDirPath.toString(), operations);
             if (!response.getDiagnostics().isEmpty()) {
                 response.getDiagnostics().forEach(diagnostic ->
-                        outStream.println(ERROR_DIAGNOSTIC + diagnostic.getSeverity() +
-                                          COLON + WHITESPACE + diagnostic.message()));
+                        outStream.println(diagnostic.getSeverity() + COLON + WHITESPACE + diagnostic.message()));
                 return;
             }
             writeSourceToFiles(response.getTypesSource());
@@ -154,7 +156,7 @@ public class WsdlCmd implements BLauncherCmd {
         } catch (WSDLException e) {
             // Keep this empty to avoid duplicating the error message
         } catch (Exception e) {
-            outStream.println("Error: " + e.getLocalizedMessage());
+            outStream.println(e.getLocalizedMessage());
             exitOnError();
         }
     }
