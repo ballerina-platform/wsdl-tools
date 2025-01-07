@@ -31,7 +31,8 @@ public class OperationContext {
     private String requestBodyName;
     private String responseBodyName;
 
-    public OperationContext(String requestName, String responseName, String requestHeaderName, String requestBodyName) {
+    public OperationContext(String requestName, String responseName, 
+                            String requestHeaderName, String requestBodyName) {
         this.requestName = requestName;
         this.responseName = responseName;
         this.requestHeaderName = requestHeaderName;

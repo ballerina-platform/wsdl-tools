@@ -225,7 +225,8 @@ public class WsdlCmd implements BLauncherCmd {
             String fileContent = Files.readString(wsdlFilePath);
             WsdlToBallerina wsdlToBallerina = new WsdlToBallerina();
             Definition wsdlDefinition = parseWSDLContent(fileContent);
-            wsdlToBallerina.generateFromWSDL(response, wsdlDefinition, outputDirectory, diagnosticMessages, operations);
+            wsdlToBallerina.generateFromWSDL(response, wsdlDefinition, 
+                                             outputDirectory, diagnosticMessages, operations);
             return response;
         } catch (IOException e) {
             message = DiagnosticMessage.wsdlToBallerinaIOError(e, null);
