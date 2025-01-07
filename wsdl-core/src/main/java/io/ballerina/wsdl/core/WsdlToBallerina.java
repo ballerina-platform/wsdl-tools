@@ -77,7 +77,6 @@ import static io.ballerina.xsd.core.XSDToRecord.processNameResolvers;
 import static io.ballerina.xsd.core.XSDToRecord.processNestedElements;
 import static io.ballerina.xsd.core.XSDToRecord.processRootElements;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.convertToCamelCase;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.deriveType;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.isSimpleType;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
@@ -89,7 +88,6 @@ import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.TYPE;
  * @since 0.1.0
  */
 public class WsdlToBallerina {
-
     public static final String OPEN_BRACES = "{";
     public static final String CLIENT_ENDPOINT_FIELD = "clientEp";
     private static final String TYPES_FILE_NAME = "types.bal";
@@ -143,10 +141,14 @@ public class WsdlToBallerina {
     public static final String HEADER = "Header";
     public static final String SLASH = "/";
     public static final String XMLDATA_NAMESPACE_URI = "@xmldata:Namespace {uri: \"%s\"}\n%s %s?;";
+    public static final String MISSING_HEADER_ELEMENT_ERROR = "Header element name cannot be extracted.";
+    public static final String MISSING_DATA_IN_HEADER_ELEMENT_ERROR = "Header element is not found in the WSDL Definition: ";
+    public static final String OPERATION_NOT_FOUND_ERROR = "WSDL operation is not found: ";
     private Definition wsdlDefinition;
     private Port soapPort;
     private SoapVersion soapVersion;
     private String soapNamespace;
+    private String serviceUrl;
 
     public void generateFromWSDL(WsdlToBallerinaResponse response, Definition wsdlDefinition,
                                  String outputDirectory, List<DiagnosticMessage> diagnosticMessages,
@@ -161,6 +163,7 @@ public class WsdlToBallerina {
                 return;
             }
             soapVersion = wsdlService.getSoapVersion();
+            serviceUrl = wsdlService.getSoapServiceUrl();
             soapNamespace = soapVersion.equals(SoapVersion.SOAP12) ? SOAP12_NAMESPACE : SOAP11_NAMESPACE;
             initializeSchemas(wsdlDefinition);
             Map<String, WsdlOperation> wsdlOperations = getWSDLOperations();
@@ -181,11 +184,11 @@ public class WsdlToBallerina {
 
     public static Header extractHeader(Definition wsdlDefinition, QName headerName, String elementName) {
         if (headerName == null) {
-            throw new IllegalArgumentException("Header element name cannot be extracted.");
+            throw new IllegalArgumentException(MISSING_HEADER_ELEMENT_ERROR);
         }
         Message message = (Message) wsdlDefinition.getMessages().get(headerName);
         if (message == null) {
-            throw new IllegalArgumentException("Header element is not found in the WSDL Definition: " + headerName);
+            throw new IllegalArgumentException(MISSING_DATA_IN_HEADER_ELEMENT_ERROR + headerName);
         }
         Part partObj = (Part) message.getParts().get(elementName);
         QName element = partObj.getElementName();
@@ -275,13 +278,13 @@ public class WsdlToBallerina {
                                                        Map<String, WsdlOperation> wsdlOperations) throws Exception {
         WsdlOperation operation = wsdlOperations.get(operationName);
         if (operation == null) {
-            throw new Exception("WSDL operation is not found: " + operationName);
+            throw new Exception(OPERATION_NOT_FOUND_ERROR + operationName);
         }
         return operation;
     }
 
     private ModulePartNode generateClientModule(ArrayList<WsdlOperation> operations) {
-        StringBuilder clientContext = Utils.generateClientContext(soapVersion.toString());
+        StringBuilder clientContext = Utils.generateClientContext(soapVersion.toString(), serviceUrl);
         return getClientModulePartNode(clientContext, operations, soapVersion.toString());
     }
 
@@ -293,15 +296,20 @@ public class WsdlToBallerina {
         }
         stringBuilder.append(CLOSE_BRACES);
         ModuleMemberDeclarationNode functionNode = NodeParser.parseModuleMemberDeclaration(stringBuilder.toString());
-        NodeList<ImportDeclarationNode> imports = createImportNodes(
-                "import ballerina/data.xmldata;",
-                "import ballerina/soap;",
-                String.format("import ballerina/soap.%s;", soapVersion.toLowerCase(Locale.ROOT))
-        );
+        NodeList<ImportDeclarationNode> imports = generateImportDeclarationNodes(soapVersion);
         NodeList<ModuleMemberDeclarationNode> moduleMembers =
                 AbstractNodeFactory.createNodeList(Collections.singletonList(functionNode));
         return NodeFactory.createModulePartNode(imports, moduleMembers,
                 AbstractNodeFactory.createIdentifierToken(EOF_TOKEN));
+    }
+
+    private static NodeList<ImportDeclarationNode> generateImportDeclarationNodes(String soapVersion) {
+        String[] imports = new String[]{
+                "import ballerina/data.xmldata;",
+                "import ballerina/soap;",
+                String.format("import ballerina/soap.%s;", soapVersion.toLowerCase(Locale.ROOT))
+        };
+        return createImportNodes(imports);
     }
 
     private static String buildRemoteFunctionCode(String operationName, String operationAction) {
