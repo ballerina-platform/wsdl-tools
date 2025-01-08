@@ -90,5 +90,5 @@ tasks.register('build') {
     dependsOn(":module-ballerina-wsdl:build")
 }
 
-//publishToMavenLocal.dependsOn build
-//publish.dependsOn build
+publishToMavenLocal.dependsOn build
+publish.dependsOn build
