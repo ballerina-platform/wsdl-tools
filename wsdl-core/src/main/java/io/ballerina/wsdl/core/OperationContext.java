@@ -24,66 +24,20 @@ import static io.ballerina.wsdl.core.Utils.SOAP_REQUEST;
 import static io.ballerina.wsdl.core.Utils.SOAP_RESPONSE;
 import static io.ballerina.wsdl.core.WsdlToBallerina.HEADER;
 
-public class OperationContext {
-    private String requestName;
-    private String responseName;
-    private String requestHeaderName;
-    private String requestBodyName;
-    private String responseBodyName;
-
-    public OperationContext(String requestName, String responseName, 
-                            String requestHeaderName, String requestBodyName) {
-        this.requestName = requestName;
-        this.responseName = responseName;
-        this.requestHeaderName = requestHeaderName;
-        this.requestBodyName = requestBodyName;
-    }
-
+/*
+* Represents the context of a SOAP operation, including names for requests, responses, headers, and body elements.
+*
+* @since 0.1.0
+ */
+public record OperationContext(String requestName, String responseName, String requestHeaderName,
+                               String requestBodyName, String responseBodyName) {
     public OperationContext(String operationName) {
-        this.requestName = operationName + SOAP_REQUEST;
-        this.responseName = operationName + SOAP_RESPONSE;
-        this.requestHeaderName = operationName + HEADER;
-        this.requestBodyName = operationName + REQUEST_BODY;
-        this.responseBodyName = operationName + RESPONSE_BODY;
-    }
-
-    public String getRequestName() {
-        return requestName;
-    }
-
-    public void setRequestName(String requestName) {
-        this.requestName = requestName;
-    }
-
-    public String getResponseName() {
-        return responseName;
-    }
-
-    public void setResponseName(String responseName) {
-        this.responseName = responseName;
-    }
-
-    public String getRequestHeaderName() {
-        return requestHeaderName;
-    }
-
-    public void setRequestHeaderName(String requestHeaderName) {
-        this.requestHeaderName = requestHeaderName;
-    }
-
-    public String getRequestBodyName() {
-        return requestBodyName;
-    }
-
-    public void setRequestBodyName(String requestBodyName) {
-        this.requestBodyName = requestBodyName;
-    }
-
-    public String getResponseBodyName() {
-        return responseBodyName;
-    }
-
-    public void setResponseBodyName(String responseBodyName) {
-        this.responseBodyName = responseBodyName;
+        this(
+                operationName + SOAP_REQUEST,
+                operationName + SOAP_RESPONSE,
+                operationName + HEADER,
+                operationName + REQUEST_BODY,
+                operationName + RESPONSE_BODY
+        );
     }
 }
