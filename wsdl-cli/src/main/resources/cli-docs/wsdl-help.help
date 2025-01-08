@@ -11,7 +11,7 @@ OPTIONS
        <source-file-path>
             Path to the WSDL file. This is a mandatory input.
 
-       --operations <operation-name>
+       --operations <operation-names>
             Comma separated URIs of the operation action to generate client methods. If not provided, methods for
             all the operations in the WSDL file will be generated.
 
