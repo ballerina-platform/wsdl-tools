@@ -17,6 +17,7 @@
  */
 
 package io.ballerina.wsdl.core;
+
 /**
  * A record representing a WSDL operation with details about the input, output, SOAP action, and URI.
  *
