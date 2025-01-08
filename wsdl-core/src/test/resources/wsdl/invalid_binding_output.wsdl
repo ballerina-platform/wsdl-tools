@@ -1,0 +1,66 @@
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://tempuri.org/">
+    <wsdl:types>
+    </wsdl:types>
+    <wsdl:portType name="CalculatorSoap">
+        <wsdl:operation name="Add">
+            <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Adds two integers. This is a test WebService. ©DNE Online</wsdl:documentation>
+            <wsdl:input message="tns:AddSoapIn"/>
+            <wsdl:output message="tns:AddSoapOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="Subtract">
+            <wsdl:input message="tns:SubtractSoapIn"/>
+            <wsdl:output message="tns:SubtractSoapOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="Multiply">
+            <wsdl:input message="tns:MultiplySoapIn"/>
+            <wsdl:output message="tns:MultiplySoapOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="Divide">
+            <wsdl:input message="tns:DivideSoapIn"/>
+            <wsdl:output message="tns:DivideSoapOut"/>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="CalculatorSoap12" >
+        <wsdl:operation name="Add">
+            <soap12:operation soapAction="http://tempuri.org/Add" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+        </wsdl:operation>
+        <wsdl:operation name="Subtract">
+            <soap12:operation soapAction="http://tempuri.org/Subtract" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap12:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="Multiply">
+            <soap12:operation soapAction="http://tempuri.org/Multiply" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap12:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="Divide">
+            <soap12:operation soapAction="http://tempuri.org/Divide" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap12:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="Calculator">
+        <wsdl:port name="CalculatorSoap" binding="tns:CalculatorSoap">
+            <soap:address location="http://www.dneonline.com/calculator.asmx"/>
+        </wsdl:port>
+        <wsdl:port name="CalculatorSoap12" binding="tns:CalculatorSoap12">
+            <soap12:address location="http://www.dneonline.com/calculator.asmx"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

@@ -1,5 +1,4 @@
 /*
-/*
  *  Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com)
  *
  *  WSO2 LLC. licenses this file to you under the Apache License,
@@ -17,20 +16,17 @@
  *  under the License.
  */
 
-module io.ballerina.wsdl.core {
-    requires io.ballerina.lang;
-    requires io.ballerina.parser;
-    requires XmlSchema;
-    requires io.ballerina.tools.api;
-    requires java.xml;
-    requires io.ballerina.formatter.core;
-    requires wsdl4j;
+package io.ballerina.wsdl.core;
 
-    exports io.ballerina.xsd.core;
-    exports io.ballerina.xsd.core.visitor;
-    exports io.ballerina.xsd.core.component;
-    exports io.ballerina.wsdl.core;
-    exports io.ballerina.wsdl.core.generator;
-    exports io.ballerina.wsdl.core.diagnostic;
-    exports io.ballerina.wsdl.core.handler.model;
+/**
+ * A record representing a WSDL operation with details about the input, output, SOAP action, and URI.
+ *
+ * @param operationInput The input message of the operation.
+ * @param operationOutput The output message of the operation.
+ * @param wsdlAction The action associated with the operation.
+ * @param wsdlOperationUri The URI of the operation.
+ *
+ * @since 0.1.0
+ */
+public record WsdlOperation(String operationInput, String operationOutput, String wsdlAction, String wsdlOperationUri) {
 }

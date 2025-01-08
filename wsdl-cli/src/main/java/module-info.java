@@ -17,20 +17,17 @@
  *  under the License.
  */
 
-module io.ballerina.wsdl.core {
+module io.ballerina.wsdl.cli {
     requires io.ballerina.lang;
     requires io.ballerina.parser;
-    requires XmlSchema;
-    requires io.ballerina.tools.api;
     requires java.xml;
+    requires io.ballerina.cli;
+    requires info.picocli;
+    requires io.ballerina.wsdl.core;
+
+    requires io.ballerina.tools.api;
     requires io.ballerina.formatter.core;
     requires wsdl4j;
 
-    exports io.ballerina.xsd.core;
-    exports io.ballerina.xsd.core.visitor;
-    exports io.ballerina.xsd.core.component;
-    exports io.ballerina.wsdl.core;
-    exports io.ballerina.wsdl.core.generator;
-    exports io.ballerina.wsdl.core.diagnostic;
-    exports io.ballerina.wsdl.core.handler.model;
+    exports io.ballerina.wsdl.cli;
 }

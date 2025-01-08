@@ -1,0 +1,32 @@
+NAME
+       bal wsdl - Generate a Ballerina client and types from a WSDL file.
+
+SYNOPSIS
+       bal wsdl <wsdl-file-path> [--operations <operation-names>] [-m | --module] <output-module-name>
+
+DESCRIPTION
+       The 'bal wsdl' command is used to generate a Ballerina client and record types for a given XSD file.
+
+OPTIONS
+       <source-file-path>
+            Path to the WSDL file. This is a mandatory input.
+
+       --operations <operation-names>
+            Comma separated URIs of the operation action to generate client methods. If not provided, methods for
+            all the operations in the WSDL file will be generated.
+
+       -m, --module <output-module-name>
+            The name of the module in which the Ballerina client and record types are generated.
+
+EXAMPLE
+       Generate a Ballerina client and types from a WSDL schema. The output will be saved to the same Ballerina project
+       where the command is executed. And the methods for all the operations in the WSDL file will be generated.
+           $ bal wsdl schema.wsdl
+
+       Generate a Ballerina client and types from a WSDL schema. The output will be saved to the 'temp' module in the
+       Ballerina project. And the methods for all the operations in the WSDL file will be generated.
+           $ bal wsdl schema.wsdl --module temp
+
+       Generate a Ballerina client and types from a WSDL schema. The output will be saved to the 'temp' module in the
+       Ballerina project. And only the method for the given operation will be generated.
+           $ bal wsdl schema.wsdl --operation http://example-operation-action-uri/path -m temp

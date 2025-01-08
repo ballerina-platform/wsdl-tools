@@ -38,3 +38,6 @@ gradleEnterprise {
         termsOfServiceAgree = 'yes'
     }
 }
+include 'wsdl-core:src:test:untitled'
+findProject(':wsdl-core:src:test:untitled')?.name = 'untitled'
+

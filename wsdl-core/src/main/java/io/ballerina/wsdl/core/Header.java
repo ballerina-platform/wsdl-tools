@@ -1,5 +1,4 @@
 /*
-/*
  *  Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com)
  *
  *  WSO2 LLC. licenses this file to you under the Apache License,
@@ -17,20 +16,30 @@
  *  under the License.
  */
 
-module io.ballerina.wsdl.core {
-    requires io.ballerina.lang;
-    requires io.ballerina.parser;
-    requires XmlSchema;
-    requires io.ballerina.tools.api;
-    requires java.xml;
-    requires io.ballerina.formatter.core;
-    requires wsdl4j;
+package io.ballerina.wsdl.core;
 
-    exports io.ballerina.xsd.core;
-    exports io.ballerina.xsd.core.visitor;
-    exports io.ballerina.xsd.core.component;
-    exports io.ballerina.wsdl.core;
-    exports io.ballerina.wsdl.core.generator;
-    exports io.ballerina.wsdl.core.diagnostic;
-    exports io.ballerina.wsdl.core.handler.model;
+public class Header {
+    private String elementName;
+    private String elementNamespace;
+
+    public Header(String elementName, String elementNamespace) {
+        this.elementName = elementName;
+        this.elementNamespace = elementNamespace;
+    }
+
+    public String getElementName() {
+        return elementName;
+    }
+
+    public void setElementName(String elementName) {
+        this.elementName = elementName;
+    }
+
+    public String getElementNamespace() {
+        return elementNamespace;
+    }
+
+    public void setElementNamespace(String elementNamespace) {
+        this.elementNamespace = elementNamespace;
+    }
 }
