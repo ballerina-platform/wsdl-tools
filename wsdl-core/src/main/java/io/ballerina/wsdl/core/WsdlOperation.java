@@ -17,33 +17,15 @@
  */
 
 package io.ballerina.wsdl.core;
-
-public class WsdlOperation {
-    private String operationInput;
-    private String operationOutput;
-    private String wsdlAction;
-    private String wsdlOperationUri;
-
-    public WsdlOperation(String operationInput, String operationOutput, String wsdlAction, String wsdlOperationUri) {
-        this.operationInput = operationInput;
-        this.operationOutput = operationOutput;
-        this.wsdlAction = wsdlAction;
-        this.wsdlOperationUri = wsdlOperationUri;
-    }
-
-    public String getOperationInput() {
-        return operationInput;
-    }
-
-    public String getOperationOutput() {
-        return operationOutput;
-    }
-
-    public String getWsdlAction() {
-        return wsdlAction;
-    }
-
-    public String getWsdlOperationUri() {
-        return wsdlOperationUri;
-    }
+/**
+ * A record representing a WSDL operation with details about the input, output, SOAP action, and URI.
+ *
+ * @param operationInput The input message of the operation.
+ * @param operationOutput The output message of the operation.
+ * @param wsdlAction The action associated with the operation.
+ * @param wsdlOperationUri The URI of the operation.
+ *
+ * @since 0.1.0
+ */
+public record WsdlOperation(String operationInput, String operationOutput, String wsdlAction, String wsdlOperationUri) {
 }
