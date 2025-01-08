@@ -55,6 +55,12 @@ bal wsdl <source-file-path> --module new_module
 
 #### 4. Generate specific operations in a Specific Module
 
+To generate only specific operations and place the output in a specified module, combine the --operations and --module options
+
+```bash
+bal wsdl <source-file-path> --operations "https://example.com/soapAction1, https://example.com/soapAction2" --module custom_module
+```
+
 ## Building from the Source
 
 ### Setting Up the Prerequisites
