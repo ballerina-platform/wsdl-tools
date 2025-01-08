@@ -5,7 +5,7 @@
 [![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/wsdl-tools.svg)](https://github.com/ballerina-platform/wsdl-tools/commits/master)  
 [![GitHub issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-standard-library/module/wsdl-tools.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-library/labels/module%2Fwsdl-tools)  
 
-The `WSDL` (Web Services Description Language) is an XML-based language for describing the functionalities of a web service that uses SOAP as the underlying protocol for data transfer.  
+`WSDL` (Web Services Description Language) is an XML-based language for describing the functionalities of a web service that uses SOAP as the underlying protocol for data transfer.  
 
 The WSDL Tool simplifies SOAP web service integration by providing the following functionalities.
 
