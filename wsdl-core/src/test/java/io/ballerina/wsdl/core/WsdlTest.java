@@ -172,15 +172,7 @@ public class WsdlTest {
                 "empty_message_element.wsdl")), "", new String[]{});
         List<WsdlToBallerinaDiagnostic> result = response.getDiagnostics();
         String expectedError = "[ERROR] Failed to generate files from the source. " +
-                "Message element is missing in the input/output of the operation: multiply";
+                "Message element is missing in the input of the operation: multiply";
         Assert.assertEquals(result.get(0).toString(), expectedError);
-    }
-
-    @org.junit.jupiter.api.Test
-    void testXsdSchema() throws Exception {
-        WsdlCmd wsdlCmd = new WsdlCmd();
-        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
-                "reservation_service.wsdl")), "", new String[]{});
-        System.out.println(response.getClientSource().content());
     }
 }
