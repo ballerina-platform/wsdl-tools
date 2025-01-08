@@ -63,7 +63,7 @@ public class DiagnosticMessage {
     }
 
     public static DiagnosticMessage wsdlToBallerinaIOError(Exception e, Object[] args) {
-        return new DiagnosticMessage("I/O Error",
+        return new DiagnosticMessage("IO_Error",
                 "Failed to read the source file.", DiagnosticSeverity.ERROR, args);
     }
 

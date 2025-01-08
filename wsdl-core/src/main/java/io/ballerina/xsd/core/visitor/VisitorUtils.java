@@ -112,7 +112,7 @@ public final class VisitorUtils {
         StringBuilder builder = new StringBuilder().append(WHITESPACE).append(EQUAL).append(WHITESPACE);
         switch (type) {
             case INT -> builder.append(value);
-            case STRING -> builder.append(QUOTATION_MARK).append(value).append(QUOTATION_MARK);
+            default -> builder.append(QUOTATION_MARK).append(value).append(QUOTATION_MARK);
         }
         return builder.toString();
     }

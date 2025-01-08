@@ -141,21 +141,30 @@ public final class XSDToRecord {
 
     public static void processRootElements(Map<String, ModuleMemberDeclarationNode> nodes,
                                            Map<String, String> rootElements) {
-        for (String element: rootElements.keySet()) {
-            String type = rootElements.get(element);
-            String[] tokens = nodes.get(type).toString().split(WHITESPACE);
-            if (!nodes.get(type).toString().contains(RECORD_WITH_OPEN_BRACE)) {
-                Utils.processSingleTypeElements(nodes, element, type, tokens);
-            } else {
-                Utils.processRecordTypeElements(nodes, element, type);
+        for (Map.Entry<String, String> entry : rootElements.entrySet()) {
+            String element = entry.getKey();
+            String type = entry.getValue();
+            ModuleMemberDeclarationNode typeNode = nodes.get(type);
+
+            if (typeNode != null) {
+                String nodeString = typeNode.toString();
+                String[] tokens = nodeString.split(WHITESPACE);
+
+                if (!nodeString.contains(RECORD_WITH_OPEN_BRACE)) {
+                    Utils.processSingleTypeElements(nodes, element, type, tokens);
+                } else {
+                    Utils.processRecordTypeElements(nodes, element, type);
+                }
             }
         }
     }
 
     public static void processNestedElements(Map<String, ModuleMemberDeclarationNode> nodes,
                                              Map<String, String> nestedElements) {
-        for (String element: nestedElements.keySet()) {
-            String nestedElement = nestedElements.get(element);
+        for (Map.Entry<String, String> entry : nestedElements.entrySet()) {
+            String element = entry.getKey();
+            String nestedElement = entry.getValue();
+
             ModuleMemberDeclarationNode moduleNode = NodeParser.parseModuleMemberDeclaration(nestedElement);
             nodes.put(element, moduleNode);
         }
@@ -163,24 +172,29 @@ public final class XSDToRecord {
 
     public static void processNameResolvers(Map<String, ModuleMemberDeclarationNode> nodes,
                                             Map<String, String> nameResolvers) {
-        for (String element: nameResolvers.keySet()) {
-            String node = nodes.get(element).toString();
-            if (node.contains(XMLDATA_NAME)) {
-                continue;
+        for (Map.Entry<String, String> entry : nameResolvers.entrySet()) {
+            String element = entry.getKey();
+            ModuleMemberDeclarationNode node = nodes.get(element);
+
+            if (node != null) {
+                String nodeString = node.toString();
+                if (!nodeString.contains(XMLDATA_NAME)) {
+                    String newNode = String.format(XMLDATA_NAME_ANNOTATION, entry.getValue()) + nodeString;
+                    ModuleMemberDeclarationNode moduleNode = NodeParser.parseModuleMemberDeclaration(newNode);
+                    nodes.put(element, moduleNode);
+                }
             }
-            String newNode = String.format(XMLDATA_NAME_ANNOTATION, nameResolvers.get(element)) + node;
-            ModuleMemberDeclarationNode moduleNode = NodeParser.parseModuleMemberDeclaration(newNode);
-            nodes.put(element, moduleNode);
         }
     }
 
     public static void processExtensions(Map<String, ModuleMemberDeclarationNode> nodes, XSDVisitor xsdVisitor) {
         Map<String, String> extensions = xsdVisitor.getExtensions();
-        for (String key: extensions.keySet()) {
+        for (Map.Entry<String, String> entry : extensions.entrySet()) {
+            String key = entry.getKey();
+            String baseValue = entry.getValue();
             if (!nodes.containsKey(key)) {
                 continue;
             }
-            String baseValue = extensions.get(key);
             if (VisitorUtils.isSimpleType(baseValue)) {
                 String fields = RECORD_WITH_OPEN_BRACE + baseValue + WHITESPACE + CONTENT_FIELD + SEMICOLON;
                 ModuleMemberDeclarationNode parentNode = nodes.get(key);
@@ -189,6 +203,9 @@ public final class XSDToRecord {
                 nodes.replace(key, moduleNode);
             } else {
                 ModuleMemberDeclarationNode baseNode = nodes.get(baseValue);
+                if (baseNode == null) {
+                    throw new IllegalStateException("Base node is not found: " + baseValue);
+                }
                 ModuleMemberDeclarationNode parentNode = nodes.get(key);
                 String fields = Utils.extractSubstring(baseNode.toString(), RECORD_WITH_OPEN_BRACE,
                         VERTICAL_BAR + CLOSE_BRACES + SEMICOLON);
@@ -200,24 +217,31 @@ public final class XSDToRecord {
         }
     }
 
+
     public static void processEnumerations(Map<String, ModuleMemberDeclarationNode> nodes,
                                            Map<String, ArrayList<String>> enumerations) {
-        for (String key: enumerations.keySet()) {
-            ArrayList<String> enums = enumerations.get(key);
+        for (Map.Entry<String, ArrayList<String>> entry : enumerations.entrySet()) {
+            String key = entry.getKey();
+            ArrayList<String> enums = entry.getValue();
             StringBuilder enumBuilder = new StringBuilder();
-            for (String enumValue: enums) {
+            for (String enumValue : enums) {
+                String formattedEnumValue = enumValue;
                 if (nodes.containsKey(enumValue)) {
-                    enumValue = enumValue.toLowerCase(Locale.ROOT) + WHITESPACE + EQUAL +
+                    formattedEnumValue = enumValue.toLowerCase(Locale.ROOT) + WHITESPACE + EQUAL +
                             QUOTATION_MARK + enumValue + QUOTATION_MARK;
                 }
-                enumBuilder.append(enumValue).append(COMMA);
+                enumBuilder.append(formattedEnumValue).append(COMMA);
+            }
+            if (enumBuilder.length() > 0) {
+                enumBuilder.setLength(enumBuilder.length() - 1);
             }
             String enumeration = nodes.get(key).toString();
             String replacingString = ENUM + WHITESPACE + key + WHITESPACE + OPEN_BRACES;
-            enumeration = enumeration.replace(replacingString, replacingString + enumBuilder.substring(0,
-                    enumBuilder.length() - 1));
+            enumeration = enumeration.replace(replacingString, replacingString + enumBuilder);
+
             ModuleMemberDeclarationNode moduleNode = NodeParser.parseModuleMemberDeclaration(enumeration);
             nodes.put(key, moduleNode);
         }
     }
+
 }
