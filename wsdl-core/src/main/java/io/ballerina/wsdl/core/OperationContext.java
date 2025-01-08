@@ -24,10 +24,16 @@ import static io.ballerina.wsdl.core.Utils.SOAP_REQUEST;
 import static io.ballerina.wsdl.core.Utils.SOAP_RESPONSE;
 import static io.ballerina.wsdl.core.WsdlToBallerina.HEADER;
 
-/*
-* Represents the context of a SOAP operation, including names for requests, responses, headers, and body elements.
-*
-* @since 0.1.0
+/**
+ * Represents the context of a SOAP operation, including names for requests, responses, headers, and body elements.
+ *
+ * @param requestName The name of the request type
+ * @param responseName The name of the response type
+ * @param requestHeaderName The name of the request header
+ * @param requestBodyName The name of the request body
+ * @param responseBodyName The name of the response body
+ *
+ * @since 0.1.0
  */
 public record OperationContext(String requestName, String responseName, String requestHeaderName,
                                String requestBodyName, String responseBodyName) {
