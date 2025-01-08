@@ -68,6 +68,7 @@ import javax.wsdl.extensions.soap12.SOAP12Address;
 import javax.wsdl.extensions.soap12.SOAP12Operation;
 import javax.xml.namespace.QName;
 
+import static io.ballerina.wsdl.core.Utils.LINE_BREAK;
 import static io.ballerina.xsd.core.Utils.generateModulePartNode;
 import static io.ballerina.xsd.core.XSDToRecord.TARGET_NAMESPACE;
 import static io.ballerina.xsd.core.XSDToRecord.generateNodes;
@@ -79,6 +80,7 @@ import static io.ballerina.xsd.core.XSDToRecord.processRootElements;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.convertToCamelCase;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.isSimpleType;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
+import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.QUESTION_MARK;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.TYPE;
 
@@ -140,9 +142,9 @@ public class WsdlToBallerina {
     public static final String SOAP12_NAMESPACE = "http://www.w3.org/2003/05/soap-envelope";
     public static final String HEADER = "Header";
     public static final String SLASH = "/";
-    public static final String XMLDATA_NAMESPACE_URI = "@xmldata:Namespace {uri: \"%s\"}\n%s %s?;";
+    public static final String XMLDATA_NAMESPACE_URI = "@xmldata:Namespace {uri: \"%s\"}";
     public static final String MISSING_HEADER_ELEMENT_ERROR = "Header element name cannot be extracted.";
-    public static final String MISSING_DATA_IN_HEADER_ELEMENT_ERROR = "Header element is not found in the WSDL Definition: ";
+    public static final String MISSING_DATA_IN_HEADER_ERROR = "Header element is not found in the WSDL Definition: ";
     public static final String OPERATION_NOT_FOUND_ERROR = "WSDL operation is not found: ";
     private Definition wsdlDefinition;
     private Port soapPort;
@@ -150,11 +152,43 @@ public class WsdlToBallerina {
     private String soapNamespace;
     private String serviceUrl;
 
+    public Definition getWsdlDefinition() {
+        return wsdlDefinition;
+    }
+
+    public void setWsdlDefinition(Definition wsdlDefinition) {
+        this.wsdlDefinition = wsdlDefinition;
+    }
+
+    public SoapVersion getSoapVersion() {
+        return soapVersion;
+    }
+
+    public void setSoapVersion(SoapVersion soapVersion) {
+        this.soapVersion = soapVersion;
+    }
+
+    public String getSoapNamespace() {
+        return soapNamespace;
+    }
+
+    public void setSoapNamespace(String soapNamespace) {
+        this.soapNamespace = soapNamespace;
+    }
+
+    public String getServiceUrl() {
+        return serviceUrl;
+    }
+
+    public void setServiceUrl(String serviceUrl) {
+        this.serviceUrl = serviceUrl;
+    }
+
     public void generateFromWSDL(WsdlToBallerinaResponse response, Definition wsdlDefinition,
                                  String outputDirectory, List<DiagnosticMessage> diagnosticMessages,
                                  String[] filteredWSDLOperations) {
         try {
-            this.wsdlDefinition = wsdlDefinition;
+            setWsdlDefinition(wsdlDefinition);
             WsdlService wsdlService = getSoapService(wsdlDefinition);
             if (wsdlService == null) {
                 DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaError(null);
@@ -162,9 +196,9 @@ public class WsdlToBallerina {
                 DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
                 return;
             }
-            soapVersion = wsdlService.getSoapVersion();
-            serviceUrl = wsdlService.getSoapServiceUrl();
-            soapNamespace = soapVersion.equals(SoapVersion.SOAP12) ? SOAP12_NAMESPACE : SOAP11_NAMESPACE;
+            setSoapVersion(wsdlService.getSoapVersion());
+            setServiceUrl(wsdlService.getSoapServiceUrl());
+            setSoapNamespace(getSoapVersion().equals(SoapVersion.SOAP12) ? SOAP12_NAMESPACE : SOAP11_NAMESPACE);
             initializeSchemas(wsdlDefinition);
             Map<String, WsdlOperation> wsdlOperations = getWSDLOperations();
             Types types = wsdlDefinition.getTypes();
@@ -188,7 +222,7 @@ public class WsdlToBallerina {
         }
         Message message = (Message) wsdlDefinition.getMessages().get(headerName);
         if (message == null) {
-            throw new IllegalArgumentException(MISSING_DATA_IN_HEADER_ELEMENT_ERROR + headerName);
+            throw new IllegalArgumentException(MISSING_DATA_IN_HEADER_ERROR + headerName);
         }
         Part partObj = (Part) message.getParts().get(elementName);
         QName element = partObj.getElementName();
@@ -200,8 +234,8 @@ public class WsdlToBallerina {
                                String outputDirectory) throws Exception {
         ArrayList<WsdlOperation> operations = new ArrayList<>();
         if (filteredWSDLOperations.length == 0) {
-            for (String wsdlOperation: wsdlOperations.keySet()) {
-                operations.add(wsdlOperations.get(wsdlOperation));
+            for (Map.Entry<String, WsdlOperation> entry : wsdlOperations.entrySet()) {
+                operations.add(entry.getValue());
             }
         } else {
             for (String operationName : filteredWSDLOperations) {
@@ -235,16 +269,16 @@ public class WsdlToBallerina {
     }
 
     private void generateEnvelopeTypes(WsdlOperation operation, Map<String, ModuleMemberDeclarationNode> nodes) {
-        String requestType = getElementType(operation.getOperationInput(), wsdlDefinition, nodes);
+        String requestType = getElementType(operation.getOperationInput(), getWsdlDefinition(), nodes);
         String requestFieldName = isSimpleType(requestType)
-                ? getElementName(operation.getOperationInput(), wsdlDefinition, nodes)
+                ? getElementName(operation.getOperationInput(), getWsdlDefinition(), nodes)
                 : requestType;
-        String responseType = getElementType(operation.getOperationOutput(), wsdlDefinition, nodes);
+        String responseType = getElementType(operation.getOperationOutput(), getWsdlDefinition(), nodes);
         String responseFieldName = isSimpleType(responseType)
-                ? getElementName(operation.getOperationOutput(), wsdlDefinition, nodes)
+                ? getElementName(operation.getOperationOutput(), getWsdlDefinition(), nodes)
                 : responseType;
         OperationContext operationContext = new OperationContext(operation.getOperationName());
-        Utils.generateTypeDefinitions(soapNamespace, nodes, requestType, requestFieldName, responseType,
+        Utils.generateTypeDefinitions(getSoapNamespace(), nodes, requestType, requestFieldName, responseType,
                 responseFieldName, operationContext);
         ModuleMemberDeclarationNode headerNode = generateHeaderNode(operation);
         nodes.put(operation.getOperationName() + HEADER, headerNode);
@@ -254,21 +288,24 @@ public class WsdlToBallerina {
         Map<String, Header> headers = new HashMap<>();
         List<String> elementNames = operation.getHeaderElements();
         String localPart = operation.getInputHeaderName();
-        QName headerName = new QName(wsdlDefinition.getTargetNamespace(), localPart);
+        QName headerName = new QName(getWsdlDefinition().getTargetNamespace(), localPart);
         for (String elementName : elementNames) {
-            Header header = extractHeader(wsdlDefinition, headerName, elementName);
+            Header header = extractHeader(getWsdlDefinition(), headerName, elementName);
             headers.put(elementName, header);
         }
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(String.format(Utils.XMLDATA_NAMESPACE, soapNamespace));
+        stringBuilder.append(String.format(Utils.XMLDATA_NAMESPACE, getSoapNamespace())).append(LINE_BREAK);
         stringBuilder.append(PUBLIC).append(WHITESPACE).append(TYPE).append(WHITESPACE)
                 .append(operation.getOperationName()).append(HEADER).append(WHITESPACE)
                 .append(RECORD).append(OPEN_BRACES);
-        for (String key: headers.keySet()) {
-            String elementName = headers.get(key).getElementName();
-            String namespace = headers.get(key).getElementNamespace();
-            String field = String.format(XMLDATA_NAMESPACE_URI, namespace, key, elementName);
-            stringBuilder.append(field);
+        for (Map.Entry<String, Header> entry : headers.entrySet()) {
+            String key = entry.getKey();
+            Header header = entry.getValue();
+            String elementName = header.getElementName();
+            String namespace = header.getElementNamespace();
+            String field = String.format(XMLDATA_NAMESPACE_URI, namespace);
+            stringBuilder.append(field).append(key).append(WHITESPACE)
+                    .append(elementName).append(QUESTION_MARK).append(SEMICOLON);
         }
         stringBuilder.append(CLOSE_BRACES).append(SEMICOLON);
         return NodeParser.parseModuleMemberDeclaration(stringBuilder.toString());
@@ -284,8 +321,8 @@ public class WsdlToBallerina {
     }
 
     private ModulePartNode generateClientModule(ArrayList<WsdlOperation> operations) {
-        StringBuilder clientContext = Utils.generateClientContext(soapVersion.toString(), serviceUrl);
-        return getClientModulePartNode(clientContext, operations, soapVersion.toString());
+        StringBuilder clientContext = Utils.generateClientContext(getSoapVersion().toString(), getServiceUrl());
+        return getClientModulePartNode(clientContext, operations, getSoapVersion().toString());
     }
 
     private static ModulePartNode getClientModulePartNode(StringBuilder stringBuilder,
@@ -376,14 +413,18 @@ public class WsdlToBallerina {
         if (parts.isEmpty()) {
             throw new IllegalStateException("No parts found for message: " + messageName);
         }
-        String firstPartKey = parts.keySet().iterator().next();
-        if (parts.get(firstPartKey).getTypeName() != null) {
-            String requestType = parts.get(firstPartKey).getTypeName().getLocalPart();
-            if (nodes.containsKey(requestType) || isSimpleType(requestType)) {
-                return parts.get(firstPartKey).getTypeName().getLocalPart();
+        for (Map.Entry<String, PartImpl> entry : parts.entrySet()) {
+            PartImpl part = entry.getValue();
+            if (part.getTypeName() != null) {
+                String requestType = part.getTypeName().getLocalPart();
+                if (nodes.containsKey(requestType) || isSimpleType(requestType)) {
+                    return requestType;
+                }
             }
+            return part.getElementName().getLocalPart();
         }
-        return parts.get(firstPartKey).getElementName().getLocalPart();
+        throw new IllegalStateException("Unexpected state: Unable to determine element " +
+                "type for message: " + messageName);
     }
 
     private String getElementName(String messageName, Definition wsdlDefinition,
@@ -458,7 +499,7 @@ public class WsdlToBallerina {
             String inputPayload = bindingOperation.getBindingInput().getName();
             String outputPayload = bindingOperation.getBindingOutput().getName();
             List<String> headerParts = new ArrayList<>();
-            String inputHeaderName = generateSOAPInputHeaderParts(bindingOperation, headerParts, soapVersion);
+            String inputHeaderName = generateSOAPInputHeaderParts(bindingOperation, headerParts, getSoapVersion());
             if (bindingOperation.getOperation().getInput().getMessage() == null
                     || bindingOperation.getOperation().getOutput().getMessage() == null) {
                 throw new Exception("Message element is missing in the input/output of the operation: " +
@@ -526,9 +567,9 @@ public class WsdlToBallerina {
         String operationName = bindingOperation.getName();
         String operationAction = null;
         for (Object element : bindingOperation.getExtensibilityElements()) {
-            if (soapVersion == SoapVersion.SOAP11 && element instanceof SOAPOperation soapOperation) {
+            if (getSoapVersion() == SoapVersion.SOAP11 && element instanceof SOAPOperation soapOperation) {
                 operationAction = soapOperation.getSoapActionURI();
-            } else if (soapVersion == SoapVersion.SOAP12 && element instanceof SOAP12Operation soapOperation) {
+            } else if (getSoapVersion() == SoapVersion.SOAP12 && element instanceof SOAP12Operation soapOperation) {
                 operationAction = soapOperation.getSoapActionURI();
             }
         }

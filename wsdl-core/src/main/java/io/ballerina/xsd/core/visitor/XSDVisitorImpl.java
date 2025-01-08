@@ -19,7 +19,6 @@
 package io.ballerina.xsd.core.visitor;
 
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.ballerina.wsdl.core.diagnostic.DiagnosticMessage;
 import io.ballerina.xsd.core.Utils;
 import io.ballerina.xsd.core.XSDFactory;
 import io.ballerina.xsd.core.component.ComplexType;
@@ -31,7 +30,6 @@ import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -189,7 +187,7 @@ public class XSDVisitorImpl implements XSDVisitor {
                 case SEQUENCE -> builder.append(visitSequence(childNode, false));
                 case CHOICE -> builder.append(visitChoice(childNode));
                 case ATTRIBUTE -> builder.append(visitAttribute(childNode));
-                case COMPLEX_CONTENT, SIMPLE_CONTENT -> builder.append(visitComplexContent(childNode));
+                default -> builder.append(visitComplexContent(childNode));
             }
         }
         builder.append(VERTICAL_BAR).append(CLOSE_BRACES).append(SEMICOLON);
@@ -332,7 +330,7 @@ public class XSDVisitorImpl implements XSDVisitor {
                     case SEQUENCE -> builder.append(visitSequence(childNode, false));
                     case CHOICE -> builder.append(visitChoice(childNode));
                     case ATTRIBUTE -> builder.append(visitAttribute(childNode));
-                    case COMPLEX_CONTENT, SIMPLE_CONTENT -> builder.append(visitComplexContent(childNode));
+                    default -> builder.append(visitComplexContent(childNode));
                 }
             }
         }
@@ -412,7 +410,7 @@ public class XSDVisitorImpl implements XSDVisitor {
         StringBuilder builder = new StringBuilder();
         switch (type) {
             case INT -> builder.append(value).append(WHITESPACE);
-            case STRING -> builder.append(QUOTATION_MARK).append(value).append(QUOTATION_MARK).append(WHITESPACE);
+            default -> builder.append(QUOTATION_MARK).append(value).append(QUOTATION_MARK).append(WHITESPACE);
         }
         return builder.toString();
     }
@@ -451,7 +449,7 @@ public class XSDVisitorImpl implements XSDVisitor {
             case SEQUENCE -> builder.append(visitSequence(childNode, false));
             case CHOICE -> builder.append(visitChoice(childNode));
             case ATTRIBUTE -> builder.append(visitAttribute(childNode));
-            case COMPLEX_CONTENT, SIMPLE_CONTENT -> builder.append(visitComplexContent(childNode));
+            default -> builder.append(visitComplexContent(childNode));
         }
     }
 

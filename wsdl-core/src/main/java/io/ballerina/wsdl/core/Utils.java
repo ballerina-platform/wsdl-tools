@@ -57,10 +57,10 @@ import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.QUESTION_MARK;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
 
 public class Utils {
-    private static final String XMLDATA_NAME = "@xmldata:Name {value: \"Envelope\"}\n";
+    private static final String XMLDATA_NAME = "@xmldata:Name {value: \"Envelope\"}";
     private static final String PUBLIC_TYPE = "public type ";
     private static final String BODY_FIELD = "Body?;";
-    public static final String XMLDATA_NAMESPACE = "@xmldata:Namespace {prefix: \"s\", uri: \"%s\"}\n";
+    public static final String XMLDATA_NAMESPACE = "@xmldata:Namespace {prefix: \"s\", uri: \"%s\"}";
     public static final String SOAP_REQUEST = "SoapRequest";
     public static final String REQUEST_BODY = "RequestBody";
     public static final String SOAP_RESPONSE = "SoapResponse";
@@ -79,26 +79,26 @@ public class Utils {
     public static void generateTypeDefinitions(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
                                                String requestType, String requestFieldName, String responseType,
                                                String responseFieldName, OperationContext operation) {
-        String requestBody = operation.getRequestBodyName() + WHITESPACE + BODY_FIELD;
-        String requestHeader = operation.getRequestHeaderName() + WHITESPACE + HEADER + QUESTION_MARK + SEMICOLON;
-        generateTypeDefinition(namespace, nodes, operation.getRequestName(),
+        String requestBody = operation.requestBodyName() + WHITESPACE + BODY_FIELD;
+        String requestHeader = operation.requestHeaderName() + WHITESPACE + HEADER + QUESTION_MARK + SEMICOLON;
+        generateTypeDefinition(namespace, nodes, operation.requestName(),
                    requestHeader + requestBody, true);
-        generateTypeDefinition(namespace, nodes, operation.getRequestBodyName(), requestType +
-                WHITESPACE + requestFieldName + QUESTION_MARK + SEMICOLON, false);
-        generateTypeDefinition(EMPTY_STRING, nodes, operation.getResponseName(),
-                   operation.getResponseBodyName() + WHITESPACE + BODY_FIELD, true);
-        generateTypeDefinition(EMPTY_STRING, nodes, operation.getResponseBodyName(), responseType +
-                               WHITESPACE + responseFieldName + QUESTION_MARK + SEMICOLON, false);
+        generateTypeDefinition(namespace, nodes, operation.requestBodyName(), requestType +
+                WHITESPACE + requestFieldName + SEMICOLON, false);
+        generateTypeDefinition(EMPTY_STRING, nodes, operation.responseName(),
+                   operation.responseBodyName() + WHITESPACE + BODY_FIELD, true);
+        generateTypeDefinition(EMPTY_STRING, nodes, operation.responseBodyName(), responseType +
+                               WHITESPACE + responseFieldName + SEMICOLON, false);
     }
 
     private static void generateTypeDefinition(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
                                                String typeName, String bodyContent, boolean includeXmlData) {
         StringBuilder builder = new StringBuilder();
         if (includeXmlData) {
-            builder.append(XMLDATA_NAME);
+            builder.append(XMLDATA_NAME).append(LINE_BREAK);
         }
         if (!namespace.equals(EMPTY_STRING)) {
-            builder.append(String.format(XMLDATA_NAMESPACE, namespace));
+            builder.append(String.format(XMLDATA_NAMESPACE, namespace)).append(LINE_BREAK);
         }
         builder.append(PUBLIC_TYPE).append(typeName).append(WHITESPACE).append(RECORD)
                 .append(OPEN_BRACES).append(LINE_BREAK).append(bodyContent).append(LINE_BREAK)
