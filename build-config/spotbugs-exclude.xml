@@ -30,6 +30,14 @@
         <Bug pattern="EI_EXPOSE_REP" />
     </Match>
     <Match>
+        <Class name="io.ballerina.wsdl.core.SoapPort" />
+        <Bug pattern="EI_EXPOSE_REP" />
+    </Match>
+    <Match>
+        <Class name="io.ballerina.wsdl.core.SoapPort" />
+        <Bug pattern="EI_EXPOSE_REP2" />
+    </Match>
+    <Match>
         <Class name="io.ballerina.wsdl.core.handler.model.WsdlOperation" />
         <Bug pattern="EI_EXPOSE_REP" />
     </Match>
