@@ -56,9 +56,9 @@ import static io.ballerina.xsd.core.visitor.VisitorUtils.typeGenerator;
 public class XSDVisitorImpl implements XSDVisitor {
     public static final String PUBLIC = "public";
     public static final String WHITESPACE = " ";
-    public static final String CONTENT_FIELD = "\\#content";
     public static final String SEMICOLON = ";";
     public static final String RECORD = "record";
+    public static final String CONTENT_FIELD = "\\#content";
     public static final String TYPE = "type";
     public static final String NAME = "name";
     public static final String DEFAULT = "default";
@@ -74,6 +74,7 @@ public class XSDVisitorImpl implements XSDVisitor {
     public static final String SEQUENCE = "sequence";
     public static final String CHOICE = "choice";
     public static final String ATTRIBUTE = "attribute";
+    public static final String ALL = "all";
     public static final String COMPLEX_CONTENT = "complexContent";
     public static final String SIMPLE_CONTENT = "simpleContent";
     public static final String EXTENSION = "extension";
@@ -113,7 +114,20 @@ public class XSDVisitorImpl implements XSDVisitor {
     private final Map<String, String> nameResolvers = new LinkedHashMap<>();
     private final Map<String, String> nestedElements = new LinkedHashMap<>();
     private final Map<String, ArrayList<String>> enumerationElements = new LinkedHashMap<>();
+    private String contentField;
     public String targetNamespace;
+
+    public XSDVisitorImpl(String contentField) {
+        this.contentField = contentField;
+    }
+
+    public String getContentField() {
+        return contentField;
+    }
+
+    public void setContentField(String contentField) {
+        this.contentField = contentField;
+    }
 
     @Override
     public String visit(Element element) throws Exception {
@@ -141,18 +155,14 @@ public class XSDVisitorImpl implements XSDVisitor {
         } catch (Exception e) {
             throw new Exception(e);
         }
-        if (nameNode == null && typeNode == null) {
-            builder.append(STRING).append(WHITESPACE).append(CONTENT_FIELD);
+        if (nameNode == null || typeNode == null) {
+            builder.append(STRING).append(WHITESPACE).append(getContentField());
         } else {
             handleFixedValues(node, builder, typeNode);
             handleMaxOccurrences(node, builder);
-            if (nameNode == null) {
-                throw new Exception(String.format(REQUIRED_FIELD_NOT_FOUND_ERROR, NAME));
-            } else {
-                builder.append(nameNode.getNodeValue());
-                handleMinOccurrences(element, builder);
-                handleDefaultValues(node, builder, typeNode);
-            }
+            builder.append(nameNode.getNodeValue());
+            handleMinOccurrences(element, builder);
+            handleDefaultValues(node, builder, typeNode);
         }
         builder.append(SEMICOLON);
         return builder.toString();
@@ -187,6 +197,7 @@ public class XSDVisitorImpl implements XSDVisitor {
                 case SEQUENCE -> builder.append(visitSequence(childNode, false));
                 case CHOICE -> builder.append(visitChoice(childNode));
                 case ATTRIBUTE -> builder.append(visitAttribute(childNode));
+                case ALL -> builder.append(visitAllContent(childNode, false));
                 default -> builder.append(visitComplexContent(childNode));
             }
         }
@@ -330,6 +341,7 @@ public class XSDVisitorImpl implements XSDVisitor {
                     case SEQUENCE -> builder.append(visitSequence(childNode, false));
                     case CHOICE -> builder.append(visitChoice(childNode));
                     case ATTRIBUTE -> builder.append(visitAttribute(childNode));
+                    case ALL -> builder.append(visitAllContent(childNode, false));
                     default -> builder.append(visitComplexContent(childNode));
                 }
             }
@@ -372,6 +384,13 @@ public class XSDVisitorImpl implements XSDVisitor {
         }
         nestedElements.put(sequenceName, stringBuilder.toString());
         return builder.toString();
+    }
+
+    public String visitAllContent(Node node, boolean isOptional) throws Exception {
+        NodeList childNodes = node.getChildNodes();
+        StringBuilder childNodeBuilder = new StringBuilder();
+        processAllChildNodes(isOptional, childNodes, childNodeBuilder);
+        return childNodeBuilder.toString();
     }
 
     private String handleElementsWithChildNodes(Node node, StringBuilder builder) throws Exception {
@@ -449,6 +468,7 @@ public class XSDVisitorImpl implements XSDVisitor {
             case SEQUENCE -> builder.append(visitSequence(childNode, false));
             case CHOICE -> builder.append(visitChoice(childNode));
             case ATTRIBUTE -> builder.append(visitAttribute(childNode));
+            case ALL -> builder.append(visitAllContent(childNode, false));
             default -> builder.append(visitComplexContent(childNode));
         }
     }
@@ -515,6 +535,20 @@ public class XSDVisitorImpl implements XSDVisitor {
             stringBuilder.append(orderAnnotation);
             stringBuilder.append(component.get().accept(this));
             order++;
+        }
+    }
+
+    private void processAllChildNodes(boolean isOptional, NodeList childNodes,
+                                      StringBuilder stringBuilder) throws Exception {
+        for (Node childNode : asIterable(childNodes)) {
+            Optional<XSDComponent> component = XSDFactory.generateComponents(childNode);
+            if (component.isEmpty()) {
+                continue;
+            }
+            component.get().setSubType(true);
+            component.get().setOptional(isOptional);
+            stringBuilder.append(addNamespace(this, getTargetNamespace()));
+            stringBuilder.append(component.get().accept(this));
         }
     }
 
@@ -619,7 +653,7 @@ public class XSDVisitorImpl implements XSDVisitor {
 
     private void appendRecordStructure(String typeName, StringBuilder builder) {
         builder.append(WHITESPACE).append(RECORD).append(WHITESPACE).append(OPEN_BRACES).append(VERTICAL_BAR)
-                .append(WHITESPACE).append(typeGenerator(typeName)).append(WHITESPACE).append(CONTENT_FIELD)
+                .append(WHITESPACE).append(typeGenerator(typeName)).append(WHITESPACE).append(getContentField())
                 .append(SEMICOLON).append(WHITESPACE).append(VERTICAL_BAR).append(CLOSE_BRACES);
     }
 
