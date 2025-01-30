@@ -7,59 +7,78 @@
 
 `WSDL` (Web Services Description Language) is an XML-based language for describing the functionalities of a web service that uses SOAP as the underlying protocol for data transfer.  
 
-The WSDL Tool simplifies SOAP web service integration by providing the following functionalities.
 
-1. Generate the Ballerina client skeleton for a given WSDL definition.  
-2. Generate Ballerina types necessary for the SOAP integration.  
+This package contains the Ballerina WSDL tool, which generates Ballerina client stubs and record types from a given WSDL file. It simplifies the integration with SOAP-based web services by automatically generating necessary types and client functions.
 
-## Using the WSDL Tool  
+### Features
 
-The `wsdl` command in Ballerina is used for WSDL-to-Ballerina code generation.  
+The WSDL tool provides the following capabilities.
+
+1. Generate a Ballerina client for a given WSDL specification.
+2. Generate Ballerina record types for the XSDs defined in the WSDL specification.
+
+### WSDL to Ballerina Code Generation
+
+The `bal wsdl` command in Ballerina is used to generate Ballerina client stubs and record types from a given WSDL file.
+
+#### Command Syntax
 
 ```bash
-bal wsdl <source-file-path>
+bal wsdl <wsdl-file-path> [--operations <operation-uris>] [--module <output-module-name>] [--port <port-name>]
 ```
 
-### Command Options  
+**Command Options:**
 
 | Option | Description |
 |--------|-------------|
-| `--operations`   | Comma separated URIs of the operation action to generate client methods. If not provided, methods for all the operations in the WSDL file will be generated |  
-| `-m`, `--module`   | The name of the module in which the Ballerina client and record types are generated |
+| `<wsdl-file-path>` | (Required) The path to the WSDL file.methods for all the operations in the WSDL file will be generated |
+| `--operations <operation-uris>` | (Optional) A comma-separated list of operation URIs for which client methods should be generated. If not provided, methods for all operations in the WSDL file will be generated. |
+| `-m, --module <output-module-name>` | (Optional) The name of the module where the generated client and record types will be placed. If not provided, output files will be saved to the current Ballerina project. |
+| `-p, --port <port-name>` | (Optional) The name of the port that defines the service endpoint. If specified, a client will be generated only for this port. Otherwise, clients for all available ports will be generated. |
 
 ### Examples
 
-#### 1. Generate client and types for all operations
-
-This command generates the Ballerina client and all the required types for all operations defined in the WSDL file. The generated files will be placed in the current Ballerina project.
+#### Generate a Ballerina client and types from a WSDL file
 
 ```bash
-bal wsdl <source-file-path>
+bal wsdl calculator.wsdl
 ```
+This command generates a Ballerina client and record types for all operations in `calculator.wsdl` and saves them in the current Ballerina project.
 
-#### 2. Generate client and types for specific operations
-
-This command generates the Ballerina client and types for specific operations defined by their SOAP action URIs.
+#### Generate a Ballerina client and types for a specific module
 
 ```bash
-bal wsdl <source-file-path> --operations "https://example.com/soapAction1, https://example.com/soapAction2"
+bal wsdl calculator.wsdl --module temp
 ```
 
-#### 3. Generate files into a specific module
+This command saves the generated client and record types in the `temp` module within the Ballerina project.
 
-This command generates the client and types for all operations and places the generated files in the specified module directory within the current Ballerina project.
+#### Generate a Ballerina client for specific operations
 
 ```bash
-bal wsdl <source-file-path> --module new_module
+bal wsdl calculator.wsdl --operations http://example-operation-action-uri/path -m temp
 ```
 
-#### 4. Generate specific operations in a Specific Module
+This command generates a client only for the specified operation and saves it in the `temp` module.
 
-To generate only specific operations and place the output in a specified module, combine the --operations and --module options
+#### Generate a Ballerina client for a specific port
 
 ```bash
-bal wsdl <source-file-path> --operations "https://example.com/soapAction1, https://example.com/soapAction2" --module custom_module
+bal wsdl calculator.wsdl --port SamplePortName
 ```
+
+This command generates a client only for the `SamplePortName` port in the WSDL file.
+
+### Output Files
+
+Upon successful execution, the generated files include,
+
+```bash
+-- client.bal (There can be multiple client files depends on the WSDL file)
+-- types.bal
+```
+
+These files contain the necessary client and type definitions to interact with the service defined in the WSDL file.
 
 ## Building from the Source
 
