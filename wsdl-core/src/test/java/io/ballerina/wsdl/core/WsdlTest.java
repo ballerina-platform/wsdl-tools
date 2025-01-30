@@ -30,6 +30,11 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * A test class for validating WSDL functionalities.
+ *
+ * @since 0.1.0
+ */
 public class WsdlTest {
     private static final Path RES_DIR = Paths.get("src/test/resources/").toAbsolutePath();
     private static final String WSDL_DIR = "wsdl";
