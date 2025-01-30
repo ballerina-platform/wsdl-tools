@@ -40,4 +40,6 @@ gradleEnterprise {
 }
 include 'wsdl-core:src:test:untitled'
 findProject(':wsdl-core:src:test:untitled')?.name = 'untitled'
+include 'wsdl-cli:src:test'
+findProject(':wsdl-cli:src:test')?.name = 'test'
 
