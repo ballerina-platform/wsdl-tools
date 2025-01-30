@@ -110,9 +110,10 @@ public final class VisitorUtils {
 
     public static String generateDefaultValue(String type, String value) {
         StringBuilder builder = new StringBuilder().append(WHITESPACE).append(EQUAL).append(WHITESPACE);
-        switch (type) {
-            case INT -> builder.append(value);
-            default -> builder.append(QUOTATION_MARK).append(value).append(QUOTATION_MARK);
+        if (type.equals(INT)) {
+            builder.append(value);
+        } else {
+            builder.append(QUOTATION_MARK).append(value).append(QUOTATION_MARK);
         }
         return builder.toString();
     }

@@ -18,8 +18,10 @@
 
 package io.ballerina.wsdl.core.handler.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import io.ballerina.wsdl.core.HeaderPart;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents a WSDL operation, detailing both its input and output payloads along with operation identifiers.
@@ -33,7 +35,7 @@ public class WsdlOperation {
     private final String operationOutput;
     private final String operationUri;
     private final String inputHeaderName;
-    private final List<String> headerElements;
+    private final Map<String, HeaderPart> headerElements;
 
     private WsdlOperation(Builder builder) {
         this.operationAction = builder.operationAction;
@@ -65,7 +67,7 @@ public class WsdlOperation {
         return operationUri;
     }
 
-    public List<String> getHeaderElements() {
+    public Map<String, HeaderPart> getHeaderElements() {
         return headerElements;
     }
 
@@ -84,7 +86,7 @@ public class WsdlOperation {
         private String operationOutput;
         private String operationUri;
         private String inputHeaderName;
-        private List<String> headerElements = new ArrayList<>();
+        private Map<String, HeaderPart> headerElements = new HashMap<>();
 
         public Builder(String operationName) {
             this.operationName = operationName;
@@ -124,11 +126,11 @@ public class WsdlOperation {
             return this;
         }
 
-        public List<String> getHeaderElements() {
+        public Map<String, HeaderPart> getHeaderElements() {
             return headerElements;
         }
 
-        public Builder setHeaderElements(List<String> headerElements) {
+        public Builder setHeaderElements(Map<String, HeaderPart> headerElements) {
             this.headerElements = headerElements;
             return this;
         }
