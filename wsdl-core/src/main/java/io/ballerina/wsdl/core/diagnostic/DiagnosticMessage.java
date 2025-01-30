@@ -62,6 +62,11 @@ public class DiagnosticMessage {
                 "Invalid WSDL. Provided WSDL is invalid.", DiagnosticSeverity.ERROR, args);
     }
 
+    public static DiagnosticMessage wsdlToBallerinaInputError(Object[] args) {
+        return new DiagnosticMessage("Error",
+                          "Provided port name is invalid", DiagnosticSeverity.ERROR, args);
+    }
+
     public static DiagnosticMessage wsdlToBallerinaIOError(Exception e, Object[] args) {
         return new DiagnosticMessage("IO_Error",
                 "Failed to read the source file.", DiagnosticSeverity.ERROR, args);

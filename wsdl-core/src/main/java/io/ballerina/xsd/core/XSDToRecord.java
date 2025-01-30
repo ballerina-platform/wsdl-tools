@@ -71,7 +71,7 @@ public final class XSDToRecord {
         if (!Objects.equals(rootElement.getLocalName(), SCHEMA)) {
             throw new Exception(INVALID_XSD_FORMAT_ERROR);
         }
-        XSDVisitor xsdVisitor = new XSDVisitorImpl();
+        XSDVisitor xsdVisitor = new XSDVisitorImpl(CONTENT_FIELD);
         xsdVisitor.setTargetNamespace(rootElement.getAttribute(TARGET_NAMESPACE));
         Map<String, ModuleMemberDeclarationNode> nodes = new LinkedHashMap<>();
         processNodeList(rootElement, nodes, xsdVisitor);
