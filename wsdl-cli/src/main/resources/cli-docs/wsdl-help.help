@@ -2,23 +2,28 @@ NAME
        bal wsdl - Generate a Ballerina client and types from a WSDL file.
 
 SYNOPSIS
-       bal wsdl <wsdl-file-path> [--operations <operation-names>] [-m | --module] <output-module-name>
+       bal wsdl <wsdl-file-path> [--operations <operation-uris>] [--module <output-module-name>] [--port <port-name>]
 
 DESCRIPTION
-       The 'bal wsdl' command is used to generate a Ballerina client and record types for a given XSD file.
+       The 'bal wsdl' command is used to generate a Ballerina client and record types for a given WSDL file.
 
 OPTIONS
        <source-file-path>
             Path to the WSDL file. This is a mandatory input.
 
-       --operations <operation-names>
+       --operations <operation-uris>
             Comma separated URIs of the operation action to generate client methods. If not provided, methods for
             all the operations in the WSDL file will be generated.
 
        -m, --module <output-module-name>
-            The name of the module in which the Ballerina client and record types are generated.
+            The name of the module in which the Ballerina client and record types will be generated. If not provided,
+            output files will be saved to the same Ballerina project.
 
-EXAMPLE
+       -p, --port <port-name>
+            The name of the port that defines the service endpoint. If specified, the client will be generated for
+            this particular port. If not provided, clients will be generated for all available ports in the WSDL file.
+
+EXAMPLES
        Generate a Ballerina client and types from a WSDL schema. The output will be saved to the same Ballerina project
        where the command is executed. And the methods for all the operations in the WSDL file will be generated.
            $ bal wsdl schema.wsdl
@@ -30,3 +35,6 @@ EXAMPLE
        Generate a Ballerina client and types from a WSDL schema. The output will be saved to the 'temp' module in the
        Ballerina project. And only the method for the given operation will be generated.
            $ bal wsdl schema.wsdl --operation http://example-operation-action-uri/path -m temp
+
+       Generate a Ballerina client and types from a WSDL schema. A client will be generated only for the specified port.
+           $ bal wsdl schema.wsdl --port SamplePortName
