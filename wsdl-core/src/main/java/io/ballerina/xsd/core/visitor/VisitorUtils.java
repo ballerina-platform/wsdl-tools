@@ -203,8 +203,16 @@ public final class VisitorUtils {
         if (pascalCase == null || pascalCase.isEmpty()) {
             return pascalCase;
         }
-        pascalCase = pascalCase.replace(UNDERSCORE, EMPTY_STRING);
+        pascalCase = pascalCase.replaceAll("[._]+", EMPTY_STRING);
         return Character.toLowerCase(pascalCase.charAt(0)) + pascalCase.substring(1);
+    }
+
+    public static String convertToPascalCase(String pascalCase) {
+        if (pascalCase == null || pascalCase.isEmpty()) {
+            return pascalCase;
+        }
+        pascalCase = pascalCase.replaceAll("[._]+", EMPTY_STRING);
+        return Character.toUpperCase(pascalCase.charAt(0)) + pascalCase.substring(1);
     }
 
     public static String sanitizeString(String input) {
