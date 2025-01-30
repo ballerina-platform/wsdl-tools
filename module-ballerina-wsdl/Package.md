@@ -1,41 +1,73 @@
 ## Package Overview
 
-This package provides the Ballerina WSDL tooling, which will make it easy to start the development of a client skeletons and types from a WSDL specification.
+This package contains the Ballerina WSDL tool, which generates Ballerina client stubs and record types from a given WSDL file. It simplifies the integration with SOAP-based web services by automatically generating necessary types and client functions.
 
-The WSDL tool provide the following capabilities.
+### Features
 
-    1. Generate the Ballerina client code for a given WSDL specification. 
-    2. Generate the Ballerina record types for a XSD provided in the WSDL specification. 
+The WSDL tool provides the following capabilities:
 
-The `wsdl` command in Ballerina is used for WSDL to Ballerina code generations. Code generation from WSDL to Ballerina can produce Ballerina client stubs.
+1. Generate a Ballerina client for a given WSDL specification.
+2. Generate Ballerina record types for the XSDs defined in the WSDL specification.
 
-### WSDL to Ballerina
+### WSDL to Ballerina Code Generation
 
-Generates Ballerina client stubs and records for a given WSDL file.
+The `bal wsdl` command in Ballerina is used to generate Ballerina client stubs and record types from a given WSDL file.
+
+#### Command Syntax
 
 ```bash
-bal wsdl -i <FILE_NAME> [--operations <COMMA_SEPARATED_OPERATION_NAMES>]
+bal wsdl <wsdl-file-path> [--operations <operation-uris>] [--module <output-module-name>] [--port <port-name>]
 ```
 
-`-i, --input <FILE_NAME>`: The input WSDL file from which Ballerina types are to be generated is specified by this required parameter.
+**Command Options:**
 
-`--operations <COMMA_SEPARATED_OPERATION_NAMES>`: This optional parameter allows the user to specify a list of operations for which Ballerina types are to be generated. If not provided, types for all operations in the WSDL will be generated.
+| Option | Description |
+|--------|-------------|
+| `<wsdl-file-path>` | (Required) The path to the WSDL file.methods for all the operations in the WSDL file will be generated |
+| `--operations <operation-uris>` | (Optional) A comma-separated list of operation URIs for which client methods should be generated. If not provided, methods for all operations in the WSDL file will be generated. |
+| `-m, --module <output-module-name>` | (Optional) The name of the module where the generated client and record types will be placed. If not provided, output files will be saved to the current Ballerina project. |
+| `-p, --port <port-name>` | (Optional) The name of the port that defines the service endpoint. If specified, a client will be generated only for this port. Otherwise, clients for all available ports will be generated. |
 
-### Samples for WSDL Commands
+### Examples
 
-The following is a sample command to generate client stubs and records from a WSDL file.
+#### Generate a Ballerina client and types from a WSDL file
 
 ```bash
-    bal wsdl -i calculator.wsdl --operations add, subtract, divide, multiply
+bal wsdl calculator.wsdl
+```
+This command generates a Ballerina client and record types for all operations in `calculator.wsdl` and saves them in the current Ballerina project.
+
+#### Generate a Ballerina client and types for a specific module
+
+```bash
+bal wsdl calculator.wsdl --module temp
 ```
 
-This will generate a Ballerina client stub and records for the `calculator.wsdl` file. The above command can be run from within anywhere on the execution path.
-It is not mandatory to run it from inside the Ballerina project.
+This command saves the generated client and record types in the `temp` module within the Ballerina project.
 
-**Output:**
+#### Generate a Ballerina client for specific operations
 
 ```bash
-The service generation process is complete. The following files were created.
--- client.bal
+bal wsdl calculator.wsdl --operations http://example-operation-action-uri/path -m temp
+```
+
+This command generates a client only for the specified operation and saves it in the `temp` module.
+
+#### Generate a Ballerina client for a specific port
+
+```bash
+bal wsdl calculator.wsdl --port SamplePortName
+```
+
+This command generates a client only for the `SamplePortName` port in the WSDL file.
+
+### Output Files
+
+Upon successful execution, the generated files include,
+
+```bash
+-- client.bal (There can be multiple client files depends on the WSDL file)
 -- types.bal
 ```
+
+These files contain the necessary client and type definitions to interact with the service defined in the WSDL file.
