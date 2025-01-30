@@ -6,9 +6,7 @@ public isolated client class Client {
     final soap11:Client clientEp;
 
     public isolated function init(string serviceUrl = "http://example.com/ecommerce/service", *soap:ClientConfig config) returns error? {
-        soap11:Client soap = check new (serviceUrl, config);
-        self.clientEp = soap;
-        return;
+        self.clientEp = check new (serviceUrl, config);
     }
 
     remote isolated function getProduct(GetProductSoapRequest envelope) returns GetProductSoapResponse|error {
@@ -16,3 +14,28 @@ public isolated client class Client {
         return xmldata:parseAsType(result);
     }
 }
+
+@xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
+public type GetProductHeader record {
+};
+
+public type GetProductResponseBody record {
+    Product Product?;
+};
+
+@xmldata:Name {value: "Envelope"}
+public type GetProductSoapResponse record {
+    GetProductResponseBody Body;
+};
+
+@xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
+public type GetProductRequestBody record {
+    ProductId ProductId?;
+};
+
+@xmldata:Name {value: "Envelope"}
+@xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
+public type GetProductSoapRequest record {
+    GetProductHeader Header?;
+    GetProductRequestBody Body;
+};
