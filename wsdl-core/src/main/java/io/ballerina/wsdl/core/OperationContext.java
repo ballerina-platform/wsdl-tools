@@ -37,13 +37,13 @@ import static io.ballerina.wsdl.core.WsdlToBallerina.HEADER;
  */
 public record OperationContext(String requestName, String responseName, String requestHeaderName,
                                String requestBodyName, String responseBodyName) {
-    public OperationContext(String operationName) {
+    public OperationContext(String operationName, String suffix) {
         this(
-                operationName + SOAP_REQUEST,
-                operationName + SOAP_RESPONSE,
-                operationName + HEADER,
-                operationName + REQUEST_BODY,
-                operationName + RESPONSE_BODY
+                operationName + suffix + SOAP_REQUEST,
+                operationName + suffix + SOAP_RESPONSE,
+                operationName + suffix + HEADER,
+                operationName + suffix + REQUEST_BODY,
+                operationName + suffix + RESPONSE_BODY
         );
     }
 }
