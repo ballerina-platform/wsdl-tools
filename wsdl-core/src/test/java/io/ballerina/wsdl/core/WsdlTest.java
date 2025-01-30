@@ -63,7 +63,7 @@ public class WsdlTest {
         WsdlCmd wsdlCmd = new WsdlCmd();
         WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(sample),
                 "", operationActions);
-        String result = response.getClientSource().content();
+        String result = response.getClientSources().get(0).content();
         String expectedValue = Files.readString(expected);
         Assert.assertEquals(result, expectedValue);
     }
