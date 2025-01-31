@@ -1,9 +1,9 @@
 # Ballerina WSDL Tool  
 
-[![Build](https://github.com/ballerina-platform/wsdl-tools/actions/workflows/build-timestamped-master.yml/badge.svg)](https://github.com/ballerina-platform/wsdl-tools/actions/workflows/build-timestamped-master.yml)  
-[![codecov](https://codecov.io/gh/ballerina-platform/wsdl-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/wsdl-tools)  
-[![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/wsdl-tools.svg)](https://github.com/ballerina-platform/wsdl-tools/commits/master)  
-[![GitHub issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-standard-library/module/wsdl-tools.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-library/labels/module%2Fwsdl-tools)  
+[![Build](https://github.com/ballerina-platform/wsdl-tools/actions/workflows/build-timestamped-master.yml/badge.svg)](https://github.com/ballerina-platform/wsdl-tools/actions/workflows/build-timestamped-master.yml) 
+[![codecov](https://codecov.io/gh/ballerina-platform/wsdl-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/ballerina-platform/wsdl-tools)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/wsdl-tools.svg)](https://github.com/ballerina-platform/wsdl-tools/commits/master)
+[![GitHub issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-standard-library/module/wsdl-tools.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-library/labels/module%2Fwsdl-tools)
 
 `WSDL` (Web Services Description Language) is an XML-based language for describing the functionalities of a web service that uses SOAP as the underlying protocol for data transfer.  
 
@@ -24,7 +24,7 @@ The `bal wsdl` command in Ballerina is used to generate Ballerina client stubs a
 #### Command Syntax
 
 ```bash
-bal wsdl <wsdl-file-path> [--operations <operation-uris>] [--module <output-module-name>] [--port <port-name>]
+$ bal wsdl <wsdl-file-path> [--operations <operation-uris>] [--module <output-module-name>] [--port <port-name>]
 ```
 
 **Command Options:**
@@ -41,14 +41,15 @@ bal wsdl <wsdl-file-path> [--operations <operation-uris>] [--module <output-modu
 #### Generate a Ballerina client and types from a WSDL file
 
 ```bash
-bal wsdl calculator.wsdl
+$ bal wsdl calculator.wsdl
 ```
+
 This command generates a Ballerina client and record types for all operations in `calculator.wsdl` and saves them in the current Ballerina project.
 
 #### Generate a Ballerina client and types for a specific module
 
 ```bash
-bal wsdl calculator.wsdl --module temp
+$ bal wsdl calculator.wsdl --module temp
 ```
 
 This command saves the generated client and record types in the `temp` module within the Ballerina project.
@@ -56,7 +57,7 @@ This command saves the generated client and record types in the `temp` module wi
 #### Generate a Ballerina client for specific operations
 
 ```bash
-bal wsdl calculator.wsdl --operations http://example-operation-action-uri/path -m temp
+$ bal wsdl calculator.wsdl --operations http://example-operation-action-uri/path -m temp
 ```
 
 This command generates a client only for the specified operation and saves it in the `temp` module.
@@ -64,7 +65,7 @@ This command generates a client only for the specified operation and saves it in
 #### Generate a Ballerina client for a specific port
 
 ```bash
-bal wsdl calculator.wsdl --port SamplePortName
+$ bal wsdl calculator.wsdl --port SamplePortName
 ```
 
 This command generates a client only for the `SamplePortName` port in the WSDL file.
