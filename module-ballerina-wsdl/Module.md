@@ -35,12 +35,13 @@ bal wsdl <wsdl-file-path> [--operations <operation-uris>] [--module <output-modu
 ```bash
 bal wsdl calculator.wsdl
 ```
+
 This command generates a Ballerina client and record types for all operations in `calculator.wsdl` and saves them in the current Ballerina project.
 
 #### Generate a Ballerina client and types for a specific module
 
 ```bash
-bal wsdl calculator.wsdl --module temp
+$ bal wsdl calculator.wsdl --module temp
 ```
 
 This command saves the generated client and record types in the `temp` module within the Ballerina project.
@@ -48,7 +49,7 @@ This command saves the generated client and record types in the `temp` module wi
 #### Generate a Ballerina client for specific operations
 
 ```bash
-bal wsdl calculator.wsdl --operations http://example-operation-action-uri/path -m temp
+$ bal wsdl calculator.wsdl --operations http://example-operation-action-uri/path -m temp
 ```
 
 This command generates a client only for the specified operation and saves it in the `temp` module.
@@ -56,7 +57,7 @@ This command generates a client only for the specified operation and saves it in
 #### Generate a Ballerina client for a specific port
 
 ```bash
-bal wsdl calculator.wsdl --port SamplePortName
+$ bal wsdl calculator.wsdl --port SamplePortName
 ```
 
 This command generates a client only for the `SamplePortName` port in the WSDL file.
