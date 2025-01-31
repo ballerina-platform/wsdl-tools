@@ -77,5 +77,4 @@
             <soap:address location="http://example.com/ecommerce/service"/>
         </port>
     </service>
-
 </definitions>
