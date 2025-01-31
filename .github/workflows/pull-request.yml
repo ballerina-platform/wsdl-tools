@@ -1,0 +1,41 @@
+name: PR build
+
+on:
+  pull_request:
+
+jobs:
+  ubuntu-build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 21.0.3
+      - name: Build with Gradle
+        env:
+          packageUser: ${{ github.actor }}
+          packagePAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+            ./gradlew build --stacktrace --scan --console=plain --no-daemon
+
+  windows-build:
+
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 21.0.3
+      - name: Build with Gradle
+        env:
+          packageUser: ${{ github.actor }}
+          packagePAT: ${{ secrets.GITHUB_TOKEN }}
+          JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF8
+        run: ./gradlew.bat build --stacktrace --scan --console=plain --no-daemon

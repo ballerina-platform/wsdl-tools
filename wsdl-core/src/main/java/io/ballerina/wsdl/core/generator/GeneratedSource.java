@@ -21,6 +21,8 @@ package io.ballerina.wsdl.core.generator;
 /**
  * Represents a generated source file, containing the file name and its content.
  *
+ * @param fileName The file name of the generated content.
+ * @param content The generated content.
  * @since 0.1.0
  */
 public record GeneratedSource(String fileName, String content) {

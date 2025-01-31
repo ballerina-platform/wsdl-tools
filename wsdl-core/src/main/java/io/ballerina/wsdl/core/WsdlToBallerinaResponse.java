@@ -30,16 +30,16 @@ import java.util.List;
  * @since 0.1.0
  */
 public class WsdlToBallerinaResponse {
-    private GeneratedSource clientSource;
+    private ArrayList<GeneratedSource> clientSources = new ArrayList<>();
     private GeneratedSource typesSource;
     private List<WsdlToBallerinaDiagnostic> diagnostics = new ArrayList<>();
 
-    public GeneratedSource getClientSource() {
-        return clientSource;
+    public ArrayList<GeneratedSource> getClientSources() {
+        return clientSources;
     }
 
-    public void setClientSource(GeneratedSource clientSource) {
-        this.clientSource = clientSource;
+    public void addClientSource(GeneratedSource clientSource) {
+        this.clientSources.add(clientSource);
     }
 
     public GeneratedSource getTypesSource() {
