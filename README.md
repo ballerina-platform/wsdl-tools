@@ -75,7 +75,7 @@ This command generates a client only for the `SamplePortName` port in the WSDL f
 Upon successful execution, the generated files include,
 
 ```bash
--- client.bal (There can be multiple client files depends on the WSDL file)
+-- client.bal (There can be multiple client files depending on the WSDL file)
 -- types.bal
 ```
 
