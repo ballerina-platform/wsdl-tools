@@ -149,6 +149,7 @@ public class WsdlToBallerina {
     public static final String SOAP12_NAMESPACE = "http://www.w3.org/2003/05/soap-envelope";
     public static final String HEADER = "Header";
     public static final String SLASH = "/";
+    public static final String MODULES = "modules";
     public static final String XMLDATA_NAMESPACE_URI = "@xmldata:Namespace {uri: \"%s\"}";
     public static final String MISSING_HEADER_ELEMENT_ERROR = "Header element name cannot be extracted.";
     public static final String MISSING_DATA_IN_HEADER_ERROR = "Header element is not found in the WSDL Definition: ";
