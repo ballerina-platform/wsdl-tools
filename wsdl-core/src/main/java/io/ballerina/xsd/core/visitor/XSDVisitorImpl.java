@@ -115,7 +115,7 @@ public class XSDVisitorImpl implements XSDVisitor {
     private final Map<String, String> nestedElements = new LinkedHashMap<>();
     private final Map<String, ArrayList<String>> enumerationElements = new LinkedHashMap<>();
     private String contentField;
-    public String targetNamespace;
+    private String targetNamespace;
 
     public XSDVisitorImpl(String contentField) {
         this.contentField = contentField;
@@ -273,7 +273,7 @@ public class XSDVisitorImpl implements XSDVisitor {
         if (fixedNode != null) {
             builder.append(generateFixedValue(deriveType(typeNode), fixedNode.getNodeValue())).append(WHITESPACE);
         } else if (attribute.hasChildNodes()) {
-            builder.append(visitAttributeChildNodes(attribute.getChildNodes(), builder)).append(WHITESPACE);
+            builder.append(visitAttributeChildNodes(attribute.getChildNodes())).append(WHITESPACE);
         } else {
             builder.append(deriveType(typeNode)).append(WHITESPACE);
         }
@@ -290,12 +290,11 @@ public class XSDVisitorImpl implements XSDVisitor {
         return builder.toString();
     }
 
-    public String visitAttributeChildNodes(NodeList childNodes, StringBuilder builder) {
-        for (int i = 0; i < childNodes.getLength(); i++) {
-            if (childNodes.item(i).getNodeType() != Node.ELEMENT_NODE) {
+    public String visitAttributeChildNodes(NodeList childNodes) {
+        for (Node childNode : asIterable(childNodes)) {
+            if (childNode.getNodeType() != Node.ELEMENT_NODE) {
                 continue;
             }
-            Node childNode = childNodes.item(i);
             if (childNode.getLocalName().equals(SIMPLE_TYPE)) {
                 for (Node simpleTypeNode : asIterable(childNode.getChildNodes())) {
                     if (simpleTypeNode.getNodeType() != Node.ELEMENT_NODE) {
