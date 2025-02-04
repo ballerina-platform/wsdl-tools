@@ -94,7 +94,7 @@ public class WsdlCmd implements BLauncherCmd {
 
     @CommandLine.Option(names = {"-m", "--module"}, description = "The name of the module in which the Ballerina " +
             "client and record types are generated.")
-    private String outputPath = "";
+    private String moduleName = "";
 
     @CommandLine.Option(names = {"--port", "-p"})
     private String portName = "";
@@ -113,47 +113,28 @@ public class WsdlCmd implements BLauncherCmd {
             outStream.println(stringBuilder);
             return;
         }
-        Path currentDir = Paths.get("").toAbsolutePath();
-        if (!ProjectUtils.isBallerinaProject(currentDir)) {
-            outStream.printf(INVALID_BALLERINA_DIRECTORY_ERROR + "%n", currentDir);
-            exitOnError();
-            return;
-        }
-        if (!ProjectUtils.validateModuleName(outputPath)) {
-            outStream.println("ERROR: invalid module name : '" + outputPath + "' :\n" +
-                              "module name can only contain alphanumerics, underscores and periods");
-            exitOnError();
-            return;
-        } else if (!ProjectUtils.validateNameLength(outputPath)) {
-            outStream.println("ERROR: invalid module name : '" + outputPath + "' :\n" +
-                              "maximum length of module name is 256 characters");
-            exitOnError();
-            return;
-        }
-        Path outputDirPath = Paths.get(outputPath);
-        if (!Objects.equals(outputPath, EMPTY_STRING)) {
-            Path basePath = Paths.get("modules").toAbsolutePath();
-            outputDirPath = basePath.resolve(outputPath).normalize();
-        }
-        if (Files.exists(outputDirPath) && !Files.isDirectory(outputDirPath)) {
-            outStream.printf(INVALID_DIRECTORY_PATH + "%n", outputPath);
-            exitOnError();
-            return;
-        }
+        Path modulePath = getModulePath();
+        if (!isValidBallerinaProject()) return;
+        if (!isValidModuleName(moduleName)) return;
         if (inputPath.isEmpty()) {
             outStream.println(MISSING_WSDL_PATH);
             exitOnError();
             return;
         }
         try {
-            if (Files.notExists(outputDirPath)) {
-                Files.createDirectories(outputDirPath);
+            if (Files.exists(modulePath) && !Files.isDirectory(modulePath)) {
+                outStream.printf(INVALID_DIRECTORY_PATH + "%n", moduleName);
+                exitOnError();
+                return;
+            }
+            if (Files.notExists(modulePath)) {
+                Files.createDirectories(modulePath);
             }
             if (!Files.exists(Path.of(inputPath.get(0)))) {
                 outStream.println(inputPath.get(0) + " file does not exist.");
                 return;
             }
-            WsdlToBallerinaResponse response = wsdlToBallerina(inputPath.get(0), outputDirPath.toString(), operations);
+            WsdlToBallerinaResponse response = wsdlToBallerina(inputPath.get(0), modulePath.toString(), operations);
             if (!response.getDiagnostics().isEmpty()) {
                 response.getDiagnostics().forEach(diagnostic ->
                         outStream.println(diagnostic.getSeverity() + COLON + WHITESPACE + diagnostic.message())
@@ -170,6 +151,43 @@ public class WsdlCmd implements BLauncherCmd {
             outStream.println(e.getLocalizedMessage());
             exitOnError();
         }
+    }
+
+    private Path getModulePath() {
+        Path modulePath = Paths.get(moduleName);
+        if (!Objects.equals(moduleName, EMPTY_STRING)) {
+            Path basePath = Paths.get("modules").toAbsolutePath();
+            modulePath = basePath.resolve(moduleName).normalize();
+        }
+        return modulePath;
+    }
+
+    private boolean isValidBallerinaProject() {
+        Path currentDir = Paths.get("").toAbsolutePath();
+        if (!ProjectUtils.isBallerinaProject(currentDir)) {
+            outStream.printf(INVALID_BALLERINA_DIRECTORY_ERROR + "%n", currentDir);
+            exitOnError();
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidModuleName(String moduleName) {
+        if (!ProjectUtils.validateModuleName(moduleName)) {
+            printInvalidModuleNameError(moduleName,
+                                "Module name can only contain alphanumerics, underscores, and periods.");
+            return false;
+        }
+        if (!ProjectUtils.validateNameLength(moduleName)) {
+            printInvalidModuleNameError(moduleName, "Maximum length of module name is 256 characters.");
+            return false;
+        }
+        return true;
+    }
+
+    private void printInvalidModuleNameError(String moduleName, String reason) {
+        outStream.printf("ERROR: invalid module name : '%s' :%n%s%n", moduleName, reason);
+        exitOnError();
     }
 
     private void writeSourceToFiles(GeneratedSource response) throws IOException {
