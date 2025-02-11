@@ -18,6 +18,11 @@
 
 package io.ballerina.wsdl.core.handler.model;
 
+import io.ballerina.wsdl.core.HeaderPart;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Represents a WSDL operation, detailing both its input and output payloads along with operation identifiers.
  *
@@ -26,14 +31,20 @@ package io.ballerina.wsdl.core.handler.model;
 public class WsdlOperation {
     private final String operationName;
     private final String operationAction;
-    private final WsdlPayload operationInput;
-    private final WsdlPayload operationOutput;
+    private final String operationInput;
+    private final String operationOutput;
+    private final String operationUri;
+    private final String inputHeaderName;
+    private final Map<String, HeaderPart> headerElements;
 
     private WsdlOperation(Builder builder) {
-        this.operationName = builder.operationName;
         this.operationAction = builder.operationAction;
         this.operationInput = builder.operationInput;
         this.operationOutput = builder.operationOutput;
+        this.operationUri = builder.operationUri;
+        this.operationName = builder.operationName;
+        this.headerElements = builder.headerElements;
+        this.inputHeaderName = builder.inputHeaderName;
     }
 
     public String getOperationName() {
@@ -44,12 +55,24 @@ public class WsdlOperation {
         return operationAction;
     }
 
-    public WsdlPayload getOperationInput() {
+    public String getOperationInput() {
         return operationInput;
     }
 
-    public WsdlPayload getOperationOutput() {
+    public String getOperationOutput() {
         return operationOutput;
+    }
+
+    public String getOperationUri() {
+        return operationUri;
+    }
+
+    public Map<String, HeaderPart> getHeaderElements() {
+        return headerElements;
+    }
+
+    public String getInputHeaderName() {
+        return inputHeaderName;
     }
 
     public Builder toBuilder() {
@@ -59,8 +82,11 @@ public class WsdlOperation {
     public static class Builder {
         private String operationName;
         private String operationAction;
-        private WsdlPayload operationInput;
-        private WsdlPayload operationOutput;
+        private String operationInput;
+        private String operationOutput;
+        private String operationUri;
+        private String inputHeaderName;
+        private Map<String, HeaderPart> headerElements = new HashMap<>();
 
         public Builder(String operationName) {
             this.operationName = operationName;
@@ -71,6 +97,9 @@ public class WsdlOperation {
             this.operationAction = wsdlOperation.operationAction;
             this.operationInput = wsdlOperation.operationInput;
             this.operationOutput = wsdlOperation.operationOutput;
+            this.operationUri = wsdlOperation.operationUri;
+            this.headerElements = wsdlOperation.headerElements;
+            this.inputHeaderName = wsdlOperation.inputHeaderName;
         }
 
         public Builder setOperationName(String operationName) {
@@ -78,18 +107,40 @@ public class WsdlOperation {
             return this;
         }
 
+        public void setOperationUri(String operationUri) {
+            this.operationUri = operationUri;
+        }
+
         public Builder setOperationAction(String operationAction) {
             this.operationAction = operationAction;
             return this;
         }
 
-        public Builder setOperationInput(WsdlPayload operationInput) {
+        public Builder setOperationInput(String operationInput) {
             this.operationInput = operationInput;
             return this;
         }
 
-        public Builder setOperationOutput(WsdlPayload operationOutput) {
+        public Builder setOperationOutput(String operationOutput) {
             this.operationOutput = operationOutput;
+            return this;
+        }
+
+        public Map<String, HeaderPart> getHeaderElements() {
+            return headerElements;
+        }
+
+        public Builder setHeaderElements(Map<String, HeaderPart> headerElements) {
+            this.headerElements = headerElements;
+            return this;
+        }
+
+        public String getInputHeaderName() {
+            return inputHeaderName;
+        }
+
+        public Builder setInputHeaderName(String inputHeaderName) {
+            this.inputHeaderName = inputHeaderName;
             return this;
         }
 

@@ -33,4 +33,5 @@ gradle-app.setting
 .DS_Store
 
 ### Generated Files ###
+bin
 target/
