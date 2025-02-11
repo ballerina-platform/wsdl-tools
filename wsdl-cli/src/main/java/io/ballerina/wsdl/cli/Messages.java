@@ -25,6 +25,8 @@ package io.ballerina.wsdl.cli;
  */
 public class Messages {
     public static final String MISSING_WSDL_PATH = "Error: Missing input WSDL file path. " +
-            "Please specify the path using the --input option.\n" +
-            "Example: bal wsdl --input <path_to_wsdl_file>";
+            "Please specify the path in the command.\n" +
+            "Example: bal wsdl <path_to_wsdl_file>";
+    public static final String INVALID_DIRECTORY_PATH = "Error: Invalid directory path has been provided. The '%s' is" +
+            " a file";
 }

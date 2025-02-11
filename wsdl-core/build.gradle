@@ -18,11 +18,16 @@
 
 plugins {
     id 'java'
+    id 'checkstyle'
+    id 'com.github.spotbugs'
 }
 
 description = "Ballerina - WSDL Tool Core"
 
 dependencies {
+    checkstyle project(':checkstyle')
+    checkstyle "com.puppycrawl.tools:checkstyle:${checkstylePluginVersion}"
+
     implementation "org.ballerinalang:ballerina-lang:${ballerinaLangVersion}"
     implementation "org.ballerinalang:ballerina-parser:${ballerinaLangVersion}"
     implementation "org.ballerinalang:formatter-core:${ballerinaLangVersion}"
@@ -30,9 +35,27 @@ dependencies {
     implementation "org.ballerinalang:ballerina-tools-api:${ballerinaLangVersion}"
     implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
 
+    testImplementation group: 'junit', name: 'junit', version: "${junitVersion}"
+    testImplementation group: 'org.testng', name: 'testng', version: "${testngVersion}"
+    implementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${junitEngineVersion}"
     implementation "wsdl4j:wsdl4j:${wsdl4jVersion}"
     implementation "org.apache.ws.commons.schema:XmlSchema:${apacheXmlSchemaVersion}"
+    testImplementation project(path: ':wsdl-cli')
 }
+
+checkstyle {
+    toolVersion "${project.checkstylePluginVersion}"
+    configFile rootProject.file("build-config/checkstyle/build/checkstyle.xml")
+    configProperties = ["suppressionFile" : file("${rootDir}/build-config/checkstyle/build/suppressions.xml")]
+}
+
+def excludePattern = '**/module-info.java'
+tasks.withType(Checkstyle) {
+    exclude excludePattern
+}
+
+checkstyleMain.dependsOn(":checkstyle:downloadCheckstyleRuleFiles")
+checkstyleTest.dependsOn(":checkstyle:downloadCheckstyleRuleFiles")
 
 compileJava {
     doFirst {
@@ -41,4 +64,29 @@ compileJava {
         ]
         classpath = files()
     }
+}
+
+spotbugsMain {
+    def classLoader = plugins["com.github.spotbugs"].class.classLoader
+    def SpotBugsConfidence = classLoader.findLoadedClass("com.github.spotbugs.snom.Confidence")
+    def SpotBugsEffort = classLoader.findLoadedClass("com.github.spotbugs.snom.Effort")
+    effort = SpotBugsEffort.MAX
+    reportLevel = SpotBugsConfidence.LOW
+    reportsDir = file("$project.buildDir/reports/spotbugs")
+    reports {
+        html.enabled true
+        text.enabled = true
+    }
+    def excludeFile = file("${rootDir}/build-config/spotbugs-exclude.xml")
+    if(excludeFile.exists()) {
+        excludeFilter = excludeFile
+    }
+}
+
+spotbugsTest {
+    enabled = false
+}
+
+test {
+    useJUnitPlatform()
 }
