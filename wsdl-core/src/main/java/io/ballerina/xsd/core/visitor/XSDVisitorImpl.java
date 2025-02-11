@@ -150,11 +150,7 @@ public class XSDVisitorImpl implements XSDVisitor {
         StringBuilder builder = new StringBuilder();
         Node nameNode = node.getAttributes().getNamedItem(NAME);
         Node typeNode = node.getAttributes().getNamedItem(TYPE);
-        try {
-            typeNode = visitNestedElements(node, nameNode, typeNode);
-        } catch (Exception e) {
-            throw new Exception(e);
-        }
+        typeNode = visitNestedElements(node, nameNode, typeNode);
         if (nameNode == null || typeNode == null) {
             builder.append(STRING).append(WHITESPACE).append(getContentField());
         } else {
