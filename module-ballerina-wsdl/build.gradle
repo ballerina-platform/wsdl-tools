@@ -1,35 +1,37 @@
 /*
- *  Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com)
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.org).
  *
- *  WSO2 LLC. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
  */
 
 import org.apache.tools.ant.taskdefs.condition.Os
 
-description = 'Ballerina - WSDL Tools'
+plugins {
+    id 'io.ballerina.plugin'
+}
+
+description = 'Ballerina - wsdl Tool'
 
 def packageName = "wsdltool"
 def packageOrg = "ballerina"
 def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
-
-def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/package/Ballerina.toml")
-def balToolTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/package/BalTool.toml")
+def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/Ballerina.toml")
+def balToolTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/BalTool.toml")
 def ballerinaTomlFile = new File("$project.projectDir/Ballerina.toml")
 def balToolTomlFile = new File("$project.projectDir/BalTool.toml")
-
-def distributionBinPath =  project.projectDir.absolutePath + "/build/target/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"
 
 def stripBallerinaExtensionVersion(String extVersion) {
     if (extVersion.matches(project.ext.timestampedVersionRegex)) {
@@ -41,26 +43,31 @@ def stripBallerinaExtensionVersion(String extVersion) {
             return extVersion
         }
     } else {
-        return extVersion.replace("${project.ext.snapshotVersion}", '')
+        return extVersion.replace("${project.ext.snapshotVersion}", "")
     }
 }
 
+ballerina {
+    packageOrganization = packageOrg
+    module = packageName
+    langVersion = ballerinaLangVersion
+}
+
 configurations {
-    copyJars
-    balTools
+    externalJars
 }
 
 dependencies {
-    copyJars "wsdl4j:wsdl4j:${wsdl4jVersion}"
-    copyJars "org.apache.ws.commons.schema:XmlSchema:${apacheXmlSchemaVersion}"
+    externalJars(group: 'wsdl4j', name: 'wsdl4j', version: "${wsdl4jVersion}") {
+        transitive = false
+    }
 
-    balTools ("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
+    externalJars(group: 'org.apache.ws.commons.schema', name: 'XmlSchema', version: "${apacheXmlSchemaVersion}") {
         transitive = false
     }
 }
 
-tasks.register('updateTomlFiles') {
-    // Update the Ballerina.toml and Dependencies.toml files
+task updateTomlFiles {
     doLast {
         def newConfig = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
@@ -72,143 +79,44 @@ tasks.register('updateTomlFiles') {
         newToolConfig = newToolConfig.replace("@xmlschema-version@", apacheXmlSchemaVersion)
         balToolTomlFile.text = newToolConfig
     }
+    
 }
 
-tasks.register('commitTomlFiles') {
-    // Commit the Ballerina.toml and Dependencies.toml files
+task commitTomlFiles {
     doLast {
         project.exec {
             ignoreExitValue true
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "git commit -m \"[Automated] Update the native jar versions\" Ballerina.toml Dependencies.toml"
+                commandLine 'cmd', '/c', "git commit -m \"[Automated] Update the native jar versions\" Ballerina.toml Dependencies.toml BalTool.toml"
             } else {
-                commandLine 'sh', '-c', "git commit -m '[Automated] Update the native jar versions' Ballerina.toml Dependencies.toml"
+                commandLine 'sh', '-c', "git commit -m '[Automated] Update the native jar versions' Ballerina.toml Dependencies.toml BalTool.toml"
             }
         }
     }
 }
 
-tasks.register('unpackJballerinaTools', Copy) {
-    configurations.balTools.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-        from zipTree(artifact.getFile())
-        into new File("${buildDir}/target/extracted-distributions", "jballerina-tools-zip")
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact source: createArtifactZip, extension: 'zip'
+        }
     }
-}
-
-tasks.register('copyDependenciesToLib', Copy) {
-    into "$project.projectDir/lib"
-    from configurations.copyJars
-
-    into "$project.projectDir/lib"
-    from "../wsdl-cli/build/libs/wsdl-cli-${project.version}.jar"
-
-    into "$project.projectDir/lib"
-    from "../wsdl-core/build/libs/wsdl-core-${project.version}.jar"
-
-    include "*.jar"
-
-    doFirst {
-        mkdir "$project.projectDir/lib"
-    }
-}
-
-
-// Publish to central
-def needPublishToCentral = false
-def needPublishToLocalCentral = false
-
-task initializeVariables {
-    if (project.hasProperty("publishToLocalCentral") && (project.findProperty("publishToLocalCentral") == "true")) {
-        needPublishToLocalCentral = true
-    }
-    if (project.hasProperty("publishToCentral") && (project.findProperty("publishToCentral") == "true")) {
-        needPublishToCentral = true
-    }
-
-    gradle.taskGraph.whenReady { graph ->
-        if (graph.hasTask(":${packageName}-ballerina:build") || graph.hasTask(":${packageName}-ballerina:publish") ||
-                graph.hasTask(":${packageName}-ballerina:publishToMavenLocal")) {
-
-            if (graph.hasTask(":${packageName}-ballerina:publish")) {
-                needPublishToCentral = true
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ballerina-platform/wsdl-tools")
+            credentials {
+                username = System.getenv("publishUser")
+                password = System.getenv("publishPAT")
             }
         }
     }
 }
 
-task ballerinaBuild {
-    inputs.dir file(project.projectDir)
-    doNotTrackState("build needs to run every time")
-    doLast {
-        // Build and populate caches
-        exec {
-            workingDir project.projectDir
-            environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
-            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "$distributionBinPath/bal.bat pack && exit " +
-                        "%%ERRORLEVEL%%"
-            } else {
-                commandLine 'sh', '-c', "${distributionBinPath}"+'/bal pack'
-            }
-        }
+updateTomlFiles.dependsOn copyStdlibs
+build.dependsOn "generatePomFileForMavenPublication"
+build.dependsOn ":wsdl-cli:build"
+test.dependsOn ":wsdl-cli:build"
 
-        copy {
-            from file("$project.projectDir/target/apidocs/${packageName}")
-            into file("$project.projectDir/build/docs_parent/docs/${packageName}")
-        }
-
-        if (needPublishToCentral) {
-            if (project.version.endsWith('-SNAPSHOT') ||
-                    project.version.matches(project.ext.timestampedVersionRegex)) {
-                return
-            }
-            if (ballerinaCentralAccessToken != null) {
-                println("Publishing to the ballerina central..")
-                exec {
-                    workingDir project.projectDir
-                    environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
-                    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                        commandLine 'cmd', '/c', "$distributionBinPath/bal.bat push && exit %%ERRORLEVEL%%"
-                    } else {
-                        commandLine 'sh', '-c', "$distributionBinPath/bal push"
-                    }
-                }
-            } else {
-                throw new InvalidUserDataException("Central Access Token is not present")
-            }
-        } else if (needPublishToLocalCentral) {
-            println("Publishing to the ballerina local central repository..")
-            exec {
-                workingDir project.projectDir
-                environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
-                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                    commandLine 'cmd', '/c', "$distributionBinPath/bal.bat push && exit %%ERRORLEVEL%% --repository=local"
-                } else {
-                    commandLine 'sh', '-c', "$distributionBinPath/bal push --repository=local"
-                }
-            }
-        }
-    }
-}
-
-tasks.register('clean', Delete) {
-    delete buildDir
-    delete file("$project.projectDir/lib")
-    delete file("$project.projectDir/target")
-}
-
-tasks.register('build') {
-    dependsOn ":wsdl-cli:build"
-    dependsOn copyDependenciesToLib
-    dependsOn unpackJballerinaTools
-    dependsOn updateTomlFiles
-    dependsOn commitTomlFiles
-    dependsOn ballerinaBuild
-}
-
-copyDependenciesToLib.dependsOn ":wsdl-cli:build"
-copyDependenciesToLib.dependsOn ":wsdl-core:build"
-ballerinaBuild.dependsOn copyDependenciesToLib
-ballerinaBuild.dependsOn unpackJballerinaTools
-ballerinaBuild.dependsOn updateTomlFiles
-commitTomlFiles.dependsOn updateTomlFiles
+publishToMavenLocal.dependsOn build
+publish.dependsOn build

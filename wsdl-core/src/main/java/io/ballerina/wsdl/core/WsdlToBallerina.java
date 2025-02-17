@@ -78,14 +78,11 @@ import static io.ballerina.xsd.core.XSDToRecord.processExtensions;
 import static io.ballerina.xsd.core.XSDToRecord.processNameResolvers;
 import static io.ballerina.xsd.core.XSDToRecord.processNestedElements;
 import static io.ballerina.xsd.core.XSDToRecord.processRootElements;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.PREFIX;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.UNDERSCORE;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.URI;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.XMLDATA_NAMESPACE;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.convertToCamelCase;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.convertToPascalCase;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.isSimpleType;
-import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.CONTENT_FIELD;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.QUESTION_MARK;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
@@ -132,6 +129,7 @@ public class WsdlToBallerina {
     public static final String EOF_TOKEN = "";
     public static final String CLOSE_BRACES = "}";
     public static final String DOT = ".";
+    public static final String PREFIX = "prefix";
     public static final String REMOTE = "remote";
     public static final String SOAP_REQUEST = "SoapRequest";
     public static final String ENVELOPE = "envelope";
@@ -258,7 +256,7 @@ public class WsdlToBallerina {
 
     private void generateTypes(WsdlToBallerinaResponse response, Types types,
                                String outputDirectory) throws Exception {
-        XSDVisitor xsdVisitor = new XSDVisitorImpl(CONTENT_FIELD);
+        XSDVisitor xsdVisitor = new XSDVisitorImpl();
         Map<String, ModuleMemberDeclarationNode> nodes = generateTypeNodes(types, xsdVisitor);
         ModulePartNode typeNodes = generateModulePartNode(nodes, xsdVisitor);
         String typesFileName = outputDirectory.equals(EMPTY_STRING)
@@ -477,6 +475,14 @@ public class WsdlToBallerina {
             }
         }
         return null;
+    }
+
+    public static String convertToPascalCase(String pascalCase) {
+        if (pascalCase == null || pascalCase.isEmpty()) {
+            return pascalCase;
+        }
+        pascalCase = pascalCase.replaceAll("[._]+", EMPTY_STRING);
+        return Character.toUpperCase(pascalCase.charAt(0)) + pascalCase.substring(1);
     }
 
     private void initializeSchemas(Definition wsdlDefinition) {

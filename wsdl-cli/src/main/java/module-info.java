@@ -24,7 +24,7 @@ module io.ballerina.wsdl.cli {
     requires io.ballerina.cli;
     requires info.picocli;
     requires io.ballerina.wsdl.core;
-
+    requires io.ballerina.xsd.core;
     requires io.ballerina.tools.api;
     requires io.ballerina.formatter.core;
     requires wsdl4j;

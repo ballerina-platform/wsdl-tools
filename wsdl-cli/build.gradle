@@ -34,6 +34,7 @@ dependencies {
     testImplementation group: 'org.testng', name: 'testng', version: "${testngVersion}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${junitEngineVersion}"
     implementation "wsdl4j:wsdl4j:${wsdl4jVersion}"
+    implementation "io.ballerina:xsd-core:${xsdCoreVersion}"
     implementation "org.ballerinalang:ballerina-lang:${ballerinaLangVersion}"
     implementation "org.ballerinalang:ballerina-parser:${ballerinaLangVersion}"
     implementation "org.ballerinalang:formatter-core:${ballerinaLangVersion}"
