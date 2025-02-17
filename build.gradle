@@ -63,7 +63,6 @@ subprojects {
         jbalTools("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
             transitive = false
         }
-        // ballerinaStdLibs "io.ballerina:module-ballerina-xsd:1.0.0"
     }
 }
 
