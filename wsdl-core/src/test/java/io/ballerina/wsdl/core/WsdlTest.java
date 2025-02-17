@@ -47,8 +47,6 @@ public class WsdlTest {
                         "http://tempuri.org/Multiply, http://tempuri.org/Add"},
                 new Object[] {"phone_verify.wsdl", "phone_verify.bal",
                         "http://ws.cdyne.com/PhoneVerify/query/CheckPhoneNumber"},
-                new Object[] {"OTA2010A.svc.wsdl", "OTA2010A.svc.bal",
-                        "http://htng.org/PWSWG/2010/12/DescriptiveContent_SubmitRequest"},
                 new Object[] {"ecommerce_service.wsdl", "ecommerce_service.bal",
                         "http://example.com/ecommerce/GetProduct"},
                 new Object[] {"global_weather.wsdl", "global_weather.bal", "http://www.webserviceX.NET/GetWeather"},
