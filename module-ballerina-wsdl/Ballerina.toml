@@ -1,8 +1,8 @@
 [package]
-distribution = "2201.9.0"
+distribution = "2201.11.0"
 org = "ballerina"
 name = "wsdltool"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Ballerina"]
 keywords = ["wsdl"]
 repository = "https://github.com/ballerina-platform/wsdl-tools"
