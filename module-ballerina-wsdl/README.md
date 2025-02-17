@@ -1,4 +1,4 @@
-## Module Overview
+## Package Overview
 
 `WSDL` (Web Services Description Language) is an XML-based language for describing the functionalities of a web service that uses SOAP as the underlying protocol for data transfer.  
 
@@ -60,6 +60,13 @@ client.bal (There can be multiple client files depending on the WSDL file)
 types.bal
 ```
 
+The following output will be displayed.
+
+```bash
+The 'types.bal' file is written to the default module
+The 'client.bal' file is written to the default module
+```
+
 ### Generate a Ballerina client and types for a specific module
 
 ```bash
@@ -83,6 +90,13 @@ modules/
 └── custom/
     └── client.bal (There can be multiple client files depending on the WSDL file)
     └── types.bal
+```
+
+The following output will be displayed.
+
+```bash
+The 'types.bal' file is written to 'modules/custom'
+The 'client.bal' file is written to 'modules/custom'
 ```
 
 ### Generate a Ballerina client for specific operations
