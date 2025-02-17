@@ -16,6 +16,27 @@
  *  under the License.
  */
 
+pluginManagement {
+    plugins {
+        id "com.github.spotbugs" version "${spotbugsPluginVersion}"
+        id "net.researchgate.release" version "${releasePluginVersion}"
+        id "de.undercouch.download" version "${downloadPluginVersion}"
+        id "io.ballerina.plugin" version "${ballerinaGradlePluginVersion}"
+    }
+
+    repositories {
+        gradlePluginPortal()
+        mavenLocal()
+        maven {
+            url = 'https://maven.pkg.github.com/ballerina-platform/*'
+            credentials {
+                username System.getenv("packageUser")
+                password System.getenv("packagePAT")
+            }
+        }
+    }
+}
+
 plugins {
     id "com.gradle.enterprise" version "3.13.2"
 }
@@ -38,8 +59,3 @@ gradleEnterprise {
         termsOfServiceAgree = 'yes'
     }
 }
-include 'wsdl-core:src:test:untitled'
-findProject(':wsdl-core:src:test:untitled')?.name = 'untitled'
-include 'wsdl-cli:src:test'
-findProject(':wsdl-cli:src:test')?.name = 'test'
-

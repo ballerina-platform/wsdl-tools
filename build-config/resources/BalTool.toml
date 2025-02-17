@@ -2,10 +2,10 @@
 id = "wsdl"
 
 [[dependency]]
-path = "lib/wsdl-cli-@toml.version@.jar"
+path = "../wsdl-cli/build/libs/wsdl-cli-@toml.version@.jar"
 
 [[dependency]]
-path = "lib/wsdl-core-@toml.version@.jar"
+path = "../wsdl-core/build/libs/wsdl-core-@toml.version@.jar"
 
 [[dependency]]
 path = "lib/wsdl4j-@wsdl4j-version@.jar"

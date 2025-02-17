@@ -25,6 +25,7 @@ plugins {
 description = "Ballerina - WSDL Tool Core"
 
 dependencies {
+    testImplementation project(path: ':wsdl-cli')
     checkstyle project(':checkstyle')
     checkstyle "com.puppycrawl.tools:checkstyle:${checkstylePluginVersion}"
 
@@ -34,13 +35,12 @@ dependencies {
     implementation "org.ballerinalang:ballerina-cli:${ballerinaLangVersion}"
     implementation "org.ballerinalang:ballerina-tools-api:${ballerinaLangVersion}"
     implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
-
+    implementation "io.ballerina:xsd-core:${xsdCoreVersion}"
     testImplementation group: 'junit', name: 'junit', version: "${junitVersion}"
     testImplementation group: 'org.testng', name: 'testng', version: "${testngVersion}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${junitEngineVersion}"
     implementation "wsdl4j:wsdl4j:${wsdl4jVersion}"
     implementation "org.apache.ws.commons.schema:XmlSchema:${apacheXmlSchemaVersion}"
-    testImplementation project(path: ':wsdl-cli')
 }
 
 checkstyle {
@@ -90,3 +90,27 @@ spotbugsTest {
 test {
     useJUnitPlatform()
 }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId "io.ballerina"
+            artifactId "xsd-core"
+            version = project.version
+            artifact jar
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ballerina-platform/xsd-tools")
+            credentials {
+                username = System.getenv("packageUser")
+                password = System.getenv("packagePAT")
+            }
+        }
+    }
+}
+
+publish.dependsOn build

@@ -25,10 +25,8 @@ module io.ballerina.wsdl.core {
     requires java.xml;
     requires io.ballerina.formatter.core;
     requires wsdl4j;
+    requires io.ballerina.xsd.core;
 
-    exports io.ballerina.xsd.core;
-    exports io.ballerina.xsd.core.visitor;
-    exports io.ballerina.xsd.core.component;
     exports io.ballerina.wsdl.core;
     exports io.ballerina.wsdl.core.generator;
     exports io.ballerina.wsdl.core.diagnostic;

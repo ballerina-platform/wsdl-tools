@@ -53,7 +53,7 @@ import static io.ballerina.wsdl.core.WsdlToBallerina.SERVICE_URL;
 import static io.ballerina.wsdl.core.WsdlToBallerina.SOAP;
 import static io.ballerina.wsdl.core.WsdlToBallerina.TYPE_INCLUSION;
 import static io.ballerina.wsdl.core.WsdlToBallerina.WHITESPACE;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.convertToPascalCase;
+import static io.ballerina.wsdl.core.WsdlToBallerina.convertToPascalCase;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.QUESTION_MARK;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
