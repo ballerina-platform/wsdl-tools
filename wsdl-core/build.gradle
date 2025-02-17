@@ -95,7 +95,7 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             groupId "io.ballerina"
-            artifactId "xsd-core"
+            artifactId "wsdl-core"
             version = project.version
             artifact jar
         }
