@@ -2,7 +2,7 @@
 distribution = "2201.11.0"
 org = "ballerina"
 name = "wsdltool"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Ballerina"]
 keywords = ["wsdl"]
 repository = "https://github.com/ballerina-platform/wsdl-tools"
@@ -10,3 +10,9 @@ license = ["Apache-2.0"]
 
 [build-options]
 observabilityIncluded = false
+
+[[platform.java21.dependency]]
+groupId = "io.ballerina"
+artifactId = "xsd-core"
+version = "1.0.2"
+path = "lib/xsd-core-1.0.2.jar"
