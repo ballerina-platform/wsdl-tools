@@ -65,6 +65,10 @@ dependencies {
     externalJars(group: 'org.apache.ws.commons.schema', name: 'XmlSchema', version: "${apacheXmlSchemaVersion}") {
         transitive = false
     }
+
+    externalJars(group: 'io.ballerina', name: 'xsd-core', version: "1.0.2") {
+        transitive = false
+    }
 }
 
 task updateTomlFiles {
