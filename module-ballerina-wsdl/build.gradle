@@ -66,7 +66,7 @@ dependencies {
         transitive = false
     }
 
-    externalJars(group: 'io.ballerina', name: 'xsd-core', version: "1.0.2") {
+    externalJars(group: 'io.ballerina', name: 'xsd-core', version: "${xsdCoreVersion}") {
         transitive = false
     }
 }
@@ -75,12 +75,14 @@ task updateTomlFiles {
     doLast {
         def newConfig = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
+        newConfig = newConfig.replace("@xsd-version@", xsdCoreVersion)
         ballerinaTomlFile.text = newConfig
 
         def newToolConfig = balToolTomlFilePlaceHolder.text.replace("@project.version@", project.version)
         newToolConfig = newToolConfig.replace("@toml.version@", project.version)
         newToolConfig = newToolConfig.replace("@wsdl4j-version@", wsdl4jVersion)
         newToolConfig = newToolConfig.replace("@xmlschema-version@", apacheXmlSchemaVersion)
+        newToolConfig = newToolConfig.replace("@xsd-version@", xsdCoreVersion)
         balToolTomlFile.text = newToolConfig
     }
     

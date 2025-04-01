@@ -28,8 +28,8 @@ configurations.all {
 
 dependencies {
     implementation project(':wsdl-core')
-    implementation 'org.ballerinalang:ballerina-cli:2201.5.0'
-    implementation 'info.picocli:picocli:4.0.1'
+    implementation group: 'info.picocli', name: 'picocli', version: "${picocliVersion}"
+    implementation group: 'org.ballerinalang', name: 'ballerina-cli', version: "${ballerinaLangVersion}"
     testImplementation group: 'junit', name: 'junit', version: "${junitVersion}"
     testImplementation group: 'org.testng', name: 'testng', version: "${testngVersion}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${junitEngineVersion}"
