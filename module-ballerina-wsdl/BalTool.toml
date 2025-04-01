@@ -8,7 +8,7 @@ path = "../wsdl-cli/build/libs/wsdl-cli-1.0.2-SNAPSHOT.jar"
 path = "../wsdl-core/build/libs/wsdl-core-1.0.2-SNAPSHOT.jar"
 
 [[dependency]]
-path = "lib/xsd-core-1.0.6.jar"
+path = "lib/xsd-core-1.0.7.jar"
 
 [[dependency]]
 path = "lib/wsdl4j-1.6.3.jar"
