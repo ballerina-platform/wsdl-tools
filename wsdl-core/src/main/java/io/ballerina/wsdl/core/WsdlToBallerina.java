@@ -73,11 +73,7 @@ import static io.ballerina.xsd.core.Utils.generateModulePartNode;
 import static io.ballerina.xsd.core.XSDToRecord.TARGET_NAMESPACE;
 import static io.ballerina.xsd.core.XSDToRecord.XMLDATA_NAME_ANNOTATION;
 import static io.ballerina.xsd.core.XSDToRecord.generateNodes;
-import static io.ballerina.xsd.core.XSDToRecord.processEnumerations;
-import static io.ballerina.xsd.core.XSDToRecord.processExtensions;
-import static io.ballerina.xsd.core.XSDToRecord.processNameResolvers;
-import static io.ballerina.xsd.core.XSDToRecord.processNestedElements;
-import static io.ballerina.xsd.core.XSDToRecord.processRootElements;
+import static io.ballerina.xsd.core.XSDToRecord.generateResidualNodes;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.UNDERSCORE;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.URI;
 import static io.ballerina.xsd.core.visitor.VisitorUtils.XMLDATA_NAMESPACE;
@@ -397,11 +393,7 @@ public class WsdlToBallerina {
             xsdVisitor.setTargetNamespace(((Schema) extElement).getElement().getAttribute(TARGET_NS));
             generateTypeNode(xsdVisitor, (Schema) extElement, nodes);
         }
-        processRootElements(nodes, xsdVisitor.getRootElements());
-        processNestedElements(nodes, xsdVisitor.getNestedElements());
-        processNameResolvers(nodes, xsdVisitor.getNameResolvers());
-        processExtensions(nodes, xsdVisitor);
-        processEnumerations(nodes, xsdVisitor.getEnumerationElements());
+        generateResidualNodes(nodes, xsdVisitor);
         return nodes;
     }
 
