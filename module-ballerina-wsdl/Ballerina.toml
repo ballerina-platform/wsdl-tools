@@ -14,5 +14,5 @@ observabilityIncluded = false
 [[platform.java21.dependency]]
 groupId = "io.ballerina"
 artifactId = "xsd-core"
-version = "1.0.2"
-path = "lib/xsd-core-1.0.2.jar"
+version = "1.0.6"
+path = "lib/xsd-core-1.0.6.jar"
