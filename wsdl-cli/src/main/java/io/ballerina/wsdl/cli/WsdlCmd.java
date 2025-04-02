@@ -76,7 +76,7 @@ public class WsdlCmd implements BLauncherCmd {
     private final PrintStream outStream;
     private final boolean exitWhenFinish;
 
-    @CommandLine.Parameters(description = "Input file path of the WSDL schema")
+    @CommandLine.Parameters(description = "Input file path of the WSDL schema", arity = "0..1")
     private List<String> inputPath = new ArrayList<>();
 
     @CommandLine.Option(
@@ -111,6 +111,12 @@ public class WsdlCmd implements BLauncherCmd {
             StringBuilder stringBuilder = new StringBuilder();
             printLongDesc(stringBuilder);
             outStream.println(stringBuilder);
+            exitOnError();
+            return;
+        }
+        if (this.inputPath == null || this.inputPath.isEmpty()) {
+            this.outStream.println("Error: Input XSD file path is required");
+            exitOnError();
             return;
         }
         Path modulePath = getModulePath();
@@ -132,6 +138,7 @@ public class WsdlCmd implements BLauncherCmd {
             }
             if (!Files.exists(Path.of(inputPath.get(0)))) {
                 outStream.println(inputPath.get(0) + " file does not exist.");
+                exitOnError();
                 return;
             }
             WsdlToBallerinaResponse response = wsdlToBallerina(inputPath.get(0), modulePath.toString(), operations);
