@@ -76,7 +76,7 @@ public class WsdlCmd implements BLauncherCmd {
     private final PrintStream outStream;
     private final boolean exitWhenFinish;
 
-    @CommandLine.Parameters(description = "Input file path of the WSDL schema")
+    @CommandLine.Parameters(description = "Input file path of the WSDL schema", arity = "0..1")
     private List<String> inputPath = new ArrayList<>();
 
     @CommandLine.Option(
@@ -107,37 +107,41 @@ public class WsdlCmd implements BLauncherCmd {
 
     @Override
     public void execute() {
-        if (helpFlag) {
+        if (this.helpFlag) {
             StringBuilder stringBuilder = new StringBuilder();
             printLongDesc(stringBuilder);
-            outStream.println(stringBuilder);
+            this.outStream.println(stringBuilder);
+            exitOnError();
+            return;
+        }
+        if (this.inputPath == null || this.inputPath.isEmpty()) {
+            this.outStream.println("A WSDL file path is required to generate the client and types.");
+            this.outStream.println("e.g: bal wsdl <wsdl-file>");
+            exitOnError();
             return;
         }
         Path modulePath = getModulePath();
         if (!isValidBallerinaProject()) return;
-        if (!isValidModuleName(moduleName)) return;
-        if (inputPath.isEmpty()) {
-            outStream.println(MISSING_WSDL_PATH);
-            exitOnError();
-            return;
-        }
+        if (!isValidModuleName(this.moduleName)) return;
         try {
             if (Files.exists(modulePath) && !Files.isDirectory(modulePath)) {
-                outStream.printf(INVALID_DIRECTORY_PATH + "%n", moduleName);
+                this.outStream.printf(INVALID_DIRECTORY_PATH + "%n", this.moduleName);
                 exitOnError();
                 return;
             }
             if (Files.notExists(modulePath)) {
                 Files.createDirectories(modulePath);
             }
-            if (!Files.exists(Path.of(inputPath.get(0)))) {
-                outStream.println(inputPath.get(0) + " file does not exist.");
+            String inputFile = this.inputPath.get(0);
+            if (!Files.exists(Path.of(inputFile))) {
+                this.outStream.println(inputFile + " file does not exist.");
+                exitOnError();
                 return;
             }
-            WsdlToBallerinaResponse response = wsdlToBallerina(inputPath.get(0), modulePath.toString(), operations);
+            WsdlToBallerinaResponse response = wsdlToBallerina(inputFile, modulePath.toString(), this.operations);
             if (!response.getDiagnostics().isEmpty()) {
                 response.getDiagnostics().forEach(diagnostic ->
-                        outStream.println(diagnostic.getSeverity() + COLON + WHITESPACE + diagnostic.message())
+                        this.outStream.println(diagnostic.getSeverity() + COLON + WHITESPACE + diagnostic.message())
                 );
                 return;
             }
@@ -148,16 +152,16 @@ public class WsdlCmd implements BLauncherCmd {
         } catch (WSDLException e) {
             // Keep this empty to avoid duplicating the error message
         } catch (Exception e) {
-            outStream.println(e.getLocalizedMessage());
+            this.outStream.println(e.getLocalizedMessage());
             exitOnError();
         }
     }
 
     private Path getModulePath() {
-        Path modulePath = Paths.get(moduleName);
-        if (!Objects.equals(moduleName, EMPTY_STRING)) {
+        Path modulePath = Paths.get(this.moduleName);
+        if (!Objects.equals(this.moduleName, EMPTY_STRING)) {
             Path basePath = Paths.get("modules").toAbsolutePath();
-            modulePath = basePath.resolve(moduleName).normalize();
+            modulePath = basePath.resolve(this.moduleName).normalize();
         }
         return modulePath;
     }
@@ -165,7 +169,7 @@ public class WsdlCmd implements BLauncherCmd {
     private boolean isValidBallerinaProject() {
         Path currentDir = Paths.get("").toAbsolutePath();
         if (!ProjectUtils.isBallerinaProject(currentDir)) {
-            outStream.printf(INVALID_BALLERINA_DIRECTORY_ERROR + "%n", currentDir);
+            this.outStream.printf(INVALID_BALLERINA_DIRECTORY_ERROR + "%n", currentDir);
             exitOnError();
             return false;
         }
@@ -186,7 +190,7 @@ public class WsdlCmd implements BLauncherCmd {
     }
 
     private void printInvalidModuleNameError(String moduleName, String reason) {
-        outStream.printf("ERROR: invalid module name : '%s' :%n%s%n", moduleName, reason);
+        this.outStream.printf("ERROR: invalid module name : '%s' :%n%s%n", moduleName, reason);
         exitOnError();
     }
 
@@ -194,12 +198,12 @@ public class WsdlCmd implements BLauncherCmd {
         Path clientPath = Paths.get(response.fileName());
         String fileName = clientPath.getFileName().toString();
         if (Files.exists(clientPath)) {
-            outStream.printf(FILE_OVERWRITE_PROMPT, clientPath.getFileName().toString());
+            this.outStream.printf(FILE_OVERWRITE_PROMPT, clientPath.getFileName().toString());
             String overwriteAccess = new Scanner(System.in).nextLine().trim().toLowerCase();
             if (overwriteAccess.equals("y")) {
                 generateFile(response, clientPath, fileName);
             } else {
-                outStream.printf("The operation is cancelled %n");
+                this.outStream.printf("The operation is cancelled %n");
             }
         } else {
             generateFile(response, clientPath, fileName);
@@ -210,7 +214,7 @@ public class WsdlCmd implements BLauncherCmd {
         String content = addAutoGeneratedMessage(response.content());
         Files.writeString(clientPath, content);
         String outputModule = getModuleName(clientPath);
-        outStream.printf("The '%s' file is written to '%s' %n", fileName, outputModule);
+        this.outStream.printf("The '%s' file is written to '%s' %n", fileName, outputModule);
     }
 
     private static String getModuleName(Path clientPath) {
@@ -248,12 +252,12 @@ public class WsdlCmd implements BLauncherCmd {
             try (InputStreamReader inputStreamREader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                  BufferedReader br = new BufferedReader(inputStreamREader)) {
                 String content = br.readLine();
-                outStream.append(content);
+                this.outStream.append(content);
                 while ((content = br.readLine()) != null) {
-                    outStream.append('\n').append(content);
+                    this.outStream.append('\n').append(content);
                 }
             } catch (IOException e) {
-                outStream.append("Helper text is not available.");
+                this.outStream.append("Helper text is not available.");
             }
         }
     }
@@ -287,7 +291,7 @@ public class WsdlCmd implements BLauncherCmd {
             WsdlToBallerina wsdlToBallerina = new WsdlToBallerina();
             Definition wsdlDefinition = parseWSDLContent(fileContent);
             wsdlToBallerina.generateFromWSDL(response, wsdlDefinition, 
-                                             outputDirectory, diagnosticMessages, operations, portName);
+                                             outputDirectory, diagnosticMessages, operations, this.portName);
             return response;
         } catch (IOException e) {
             message = DiagnosticMessage.wsdlToBallerinaIOError(e, null);
@@ -319,7 +323,7 @@ public class WsdlCmd implements BLauncherCmd {
     }
 
     private void exitOnError() {
-        if (exitWhenFinish) {
+        if (this.exitWhenFinish) {
             Runtime.getRuntime().exit(1);
         }
     }
