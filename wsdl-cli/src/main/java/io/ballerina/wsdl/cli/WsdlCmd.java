@@ -115,7 +115,8 @@ public class WsdlCmd implements BLauncherCmd {
             return;
         }
         if (this.inputPath == null || this.inputPath.isEmpty()) {
-            this.outStream.println("Error: Input WSDL file path is required");
+            this.outStream.println("A WSDL file path is required to generate the client and types.");
+            this.outStream.println("e.g: bal wsdl <wsdl file>");
             exitOnError();
             return;
         }
