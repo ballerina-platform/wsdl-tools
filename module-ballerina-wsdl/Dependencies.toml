@@ -10,7 +10,7 @@ distribution-version = "2201.11.0"
 [[package]]
 org = "ballerina"
 name = "wsdltool"
-version = "1.0.2"
+version = "1.0.3"
 modules = [
 	{org = "ballerina", packageName = "wsdltool", moduleName = "wsdltool"}
 ]
