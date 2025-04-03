@@ -132,13 +132,13 @@ public class WsdlCmd implements BLauncherCmd {
             if (Files.notExists(modulePath)) {
                 Files.createDirectories(modulePath);
             }
-            if (!Files.exists(Path.of(this.inputPath.get(0)))) {
-                this.outStream.println(this.inputPath.get(0) + " file does not exist.");
+            String inputFile = this.inputPath.get(0);
+            if (!Files.exists(Path.of(inputFile))) {
+                this.outStream.println(inputFile + " file does not exist.");
                 exitOnError();
                 return;
             }
-            WsdlToBallerinaResponse response = wsdlToBallerina(this.inputPath.get(0),
-                                                               modulePath.toString(), this.operations);
+            WsdlToBallerinaResponse response = wsdlToBallerina(inputFile, modulePath.toString(), this.operations);
             if (!response.getDiagnostics().isEmpty()) {
                 response.getDiagnostics().forEach(diagnostic ->
                         this.outStream.println(diagnostic.getSeverity() + COLON + WHITESPACE + diagnostic.message())
