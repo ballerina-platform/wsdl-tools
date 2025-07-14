@@ -147,6 +147,8 @@ public class WsdlToBallerina {
     public static final String XMLDATA_NAMESPACE_URI = "@xmldata:Namespace {uri: \"%s\"}";
     public static final String MISSING_HEADER_ELEMENT_ERROR = "Header element name cannot be extracted.";
     public static final String MISSING_DATA_IN_HEADER_ERROR = "Header element is not found in the WSDL Definition: ";
+    public static final String MISSING_PART_IN_HEADER_ERROR =
+            "Processing Operation ''%s'' - Missing Part ''%s'' in Header ''%s''";
     public static final String OPERATION_NOT_FOUND_ERROR = "WSDL operation is not found: ";
     private Definition wsdlDefinition;
     private ArrayList<SoapPort> soapPorts = new ArrayList<>();
@@ -232,11 +234,14 @@ public class WsdlToBallerina {
         DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
     }
 
-    public static Header extractHeader(Definition wsdlDefinition, QName headerName, String elementName) {
+    public static Header extractHeader(Definition wsdlDefinition, QName headerName, String elementName,
+                                       String operationName) {
         Objects.requireNonNull(headerName, MISSING_HEADER_ELEMENT_ERROR);
         Message message = (Message) wsdlDefinition.getMessages().get(headerName);
         Objects.requireNonNull(message, MISSING_DATA_IN_HEADER_ERROR + headerName);
         Part partObj = (Part) message.getParts().get(elementName);
+        Objects.requireNonNull(partObj, String.format(MISSING_PART_IN_HEADER_ERROR, operationName, elementName,
+                headerName.getLocalPart()));
         QName element = partObj.getElementName();
         return new Header(element.getLocalPart(), element.getNamespaceURI());
     }
@@ -284,7 +289,7 @@ public class WsdlToBallerina {
         String localPart = operation.getInputHeaderName();
         QName headerName = new QName(getWsdlDefinition().getTargetNamespace(), localPart);
         for (String elementName : elementNames.keySet()) {
-            Header header = extractHeader(getWsdlDefinition(), headerName, elementName);
+            Header header = extractHeader(getWsdlDefinition(), headerName, elementName, operation.getOperationName());
             headers.put(elementName, header);
         }
         StringBuilder stringBuilder = new StringBuilder();
