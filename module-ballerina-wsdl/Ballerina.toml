@@ -2,7 +2,7 @@
 distribution = "2201.11.0"
 org = "ballerina"
 name = "wsdltool"
-version = "1.0.3"
+version = "1.0.4"
 authors = ["Ballerina"]
 keywords = ["wsdl"]
 repository = "https://github.com/ballerina-platform/wsdl-tools"
