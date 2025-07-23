@@ -22,7 +22,9 @@ import io.ballerina.wsdl.core.diagnostic.WsdlToBallerinaDiagnostic;
 import io.ballerina.wsdl.core.generator.GeneratedSource;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents the response from converting a WSDL description into Ballerina client and type definitions.
@@ -32,6 +34,7 @@ import java.util.List;
 public class WsdlToBallerinaResponse {
     private ArrayList<GeneratedSource> clientSources = new ArrayList<>();
     private GeneratedSource typesSource;
+    private Map<String, String> resolvedNameMeta = new HashMap<>();
     private List<WsdlToBallerinaDiagnostic> diagnostics = new ArrayList<>();
 
     public ArrayList<GeneratedSource> getClientSources() {
@@ -52,6 +55,14 @@ public class WsdlToBallerinaResponse {
 
     public List<WsdlToBallerinaDiagnostic> getDiagnostics() {
         return diagnostics;
+    }
+
+    public void setResolvedNameMeta(Map<String, String> resolvedNameMeta) {
+        this.resolvedNameMeta = resolvedNameMeta;
+    }
+
+    public Map<String, String> getResolvedNameMeta() {
+        return resolvedNameMeta;
     }
 
     public void setDiagnostics(List<WsdlToBallerinaDiagnostic> diagnostics) {

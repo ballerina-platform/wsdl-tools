@@ -201,14 +201,15 @@ public class WsdlToBallerina {
                 DiagnosticUtils.getDiagnosticResponse(diagnosticMessages, response);
                 return;
             }
+            Types types = wsdlDefinition.getTypes();
+            Objects.requireNonNull(types, "Could not find <wsdl:types> in the file");
+            generateTypes(response, types, outputDirectory);
             for (SoapPort port: soapPorts) {
                 setSoapVersion(port.soapVersion());
                 setServiceUrl(port.serviceUrl());
                 setSoapNamespace(getSoapVersion().equals(SoapVersion.SOAP12) ? SOAP12_NAMESPACE : SOAP11_NAMESPACE);
                 initializeSchemas(wsdlDefinition);
                 Map<String, WsdlOperation> wsdlOperations = getWSDLOperations(port.soapPort());
-                Types types = wsdlDefinition.getTypes();
-                Objects.requireNonNull(types, "Could not find <wsdl:types> in the file");
                 ArrayList<WsdlOperation> operations = new ArrayList<>();
                 if (filteredWSDLOperations.length == 0) {
                     for (Map.Entry<String, WsdlOperation> entry : wsdlOperations.entrySet()) {
@@ -223,8 +224,6 @@ public class WsdlToBallerina {
                 generateClient(response, outputDirectory, port, operations,
                                soapPorts.size() > 1 ? port.soapPort().getName() + UNDERSCORE : EMPTY_STRING);
             }
-            Types types = wsdlDefinition.getTypes();
-            generateTypes(response, types, outputDirectory);
         } catch (WSDLException e) {
             DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaError(null);
             diagnosticMessages.add(message);
@@ -249,7 +248,7 @@ public class WsdlToBallerina {
 
     private void generateClient(WsdlToBallerinaResponse response, String outputDirectory, SoapPort port,
                                 ArrayList<WsdlOperation> operation, String filePrefix) throws FormatterException {
-        ModulePartNode clientModule = generateClientModule(operation, port.soapPort());
+        ModulePartNode clientModule = generateClientModule(operation, port.soapPort(), response);
         String prefix = filePrefix.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase(Locale.ROOT);
         String clientFileName = outputDirectory.equals(EMPTY_STRING)
                 ? prefix + CLIENT_FILE_NAME : outputDirectory + SLASH + prefix + CLIENT_FILE_NAME;
@@ -264,10 +263,12 @@ public class WsdlToBallerina {
         String typesFileName = outputDirectory.equals(EMPTY_STRING)
                 ? TYPES_FILE_NAME : outputDirectory + SLASH + TYPES_FILE_NAME;
         response.setTypesSource(new GeneratedSource(typesFileName, Utils.formatModuleParts(typeNodes)));
+        response.setResolvedNameMeta(xsdVisitor.getResolvedNameMeta());
     }
 
     private OperationContext generateEnvelopeTypes(WsdlOperation operation,
-                                                   Map<String, ModuleMemberDeclarationNode> nodes, Port port) {
+                                                   Map<String, ModuleMemberDeclarationNode> nodes, Port port,
+                                                   Map<String, String> resolvedNameMeta) {
         String requestType = getElementType(operation.getOperationInput(), getWsdlDefinition(), nodes);
         String requestFieldName = isSimpleType(requestType)
                 ? getElementName(operation.getOperationInput(), getWsdlDefinition()) : requestType;
@@ -278,13 +279,14 @@ public class WsdlToBallerina {
         OperationContext operationContext = new OperationContext(operation.getOperationName(), suffix);
         Utils.generateTypeDefinitions(getSoapNamespace(), nodes, requestType, requestFieldName, responseType,
                                       responseFieldName, operationContext);
-        ModuleMemberDeclarationNode headerNode = generateHeaderNode(operation, operationContext);
+        ModuleMemberDeclarationNode headerNode = generateHeaderNode(operation, operationContext, resolvedNameMeta);
         nodes.put(operation.getOperationName() + HEADER, headerNode);
         return operationContext;
     }
 
     private ModuleMemberDeclarationNode generateHeaderNode(WsdlOperation operation,
-                                                           OperationContext operationContext) {
+                                                           OperationContext operationContext,
+                                                           Map<String, String> resolvedNameMeta) {
         Map<String, Header> headers = new HashMap<>();
         Map<String, HeaderPart> elementNames = operation.getHeaderElements();
         String localPart = operation.getInputHeaderName();
@@ -303,16 +305,17 @@ public class WsdlToBallerina {
             Header header = entry.getValue();
             String elementName = header.getElementName();
             String namespace = header.getElementNamespace();
-            if (!elementName.equals(key)) {
+            String resolvedName = resolvedNameMeta.getOrDefault(namespace + elementName, elementName);
+            if (!resolvedName.equals(key)) {
                 stringBuilder.append(String.format(XMLDATA_NAME_ANNOTATION, elementName))
                         .append(XMLDATA_NAMESPACE + WHITESPACE + OPEN_BRACES + PREFIX + COLON + QUOTATION_MARK)
                         .append(key).append(QUOTATION_MARK).append(COMMA).append(URI).append(COLON)
                         .append(QUOTATION_MARK).append(namespace).append(QUOTATION_MARK).append(CLOSE_BRACES)
-                        .append(key).append(WHITESPACE).append(key).append(QUESTION_MARK).append(SEMICOLON);
+                        .append(resolvedName).append(WHITESPACE).append(key).append(QUESTION_MARK).append(SEMICOLON);
             } else {
                 String field = String.format(XMLDATA_NAMESPACE_URI, namespace);
-                stringBuilder.append(field).append(key).append(WHITESPACE)
-                        .append(elementName).append(QUESTION_MARK).append(SEMICOLON);
+                stringBuilder.append(field).append(resolvedName).append(WHITESPACE)
+                        .append(key).append(QUESTION_MARK).append(SEMICOLON);
             }
         }
         stringBuilder.append(CLOSE_BRACES).append(SEMICOLON);
@@ -326,17 +329,19 @@ public class WsdlToBallerina {
         return operation;
     }
 
-    private ModulePartNode generateClientModule(ArrayList<WsdlOperation> operations, Port port) {
+    private ModulePartNode generateClientModule(ArrayList<WsdlOperation> operations, Port port,
+                                                WsdlToBallerinaResponse response) {
         StringBuilder clientContext = Utils.generateClientContext(getSoapVersion().toString(), getServiceUrl(),
                                                                   port, soapPorts.size() > 1);
-        return getClientModulePartNode(clientContext, operations, getSoapVersion().toString(), port);
+        return getClientModulePartNode(clientContext, operations, getSoapVersion().toString(), port, response);
     }
 
     private ModulePartNode getClientModulePartNode(StringBuilder stringBuilder, ArrayList<WsdlOperation> operations,
-                                                   String soapVersion, Port port) {
+                                                   String soapVersion, Port port, WsdlToBallerinaResponse response) {
         Map<String, ModuleMemberDeclarationNode> nodes = new LinkedHashMap<>();
         for (WsdlOperation operation: operations) {
-            OperationContext operationContext = generateEnvelopeTypes(operation, nodes, port);
+            OperationContext operationContext = generateEnvelopeTypes(operation, nodes, port,
+                    response.getResolvedNameMeta());
             String functionCode = buildRemoteFunctionCode(operationContext, operation.getOperationName(),
                     operation.getOperationAction());
             stringBuilder.append(functionCode);
