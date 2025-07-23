@@ -35,6 +35,7 @@ import io.ballerina.wsdl.core.generator.GeneratedSource;
 import io.ballerina.wsdl.core.handler.SchemaHandler;
 import io.ballerina.wsdl.core.handler.model.SoapVersion;
 import io.ballerina.wsdl.core.handler.model.WsdlOperation;
+import io.ballerina.xsd.core.node.MemberNode;
 import io.ballerina.xsd.core.visitor.XSDVisitor;
 import io.ballerina.xsd.core.visitor.XSDVisitorImpl;
 import org.apache.ws.commons.schema.XmlSchema;
@@ -74,11 +75,11 @@ import static io.ballerina.xsd.core.XSDToRecord.TARGET_NAMESPACE;
 import static io.ballerina.xsd.core.XSDToRecord.XMLDATA_NAME_ANNOTATION;
 import static io.ballerina.xsd.core.XSDToRecord.generateNodes;
 import static io.ballerina.xsd.core.XSDToRecord.generateResidualNodes;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.UNDERSCORE;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.URI;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.XMLDATA_NAMESPACE;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.convertToCamelCase;
-import static io.ballerina.xsd.core.visitor.VisitorUtils.isSimpleType;
+import static io.ballerina.xsd.core.visitor.Utils.UNDERSCORE;
+import static io.ballerina.xsd.core.visitor.Utils.URI;
+import static io.ballerina.xsd.core.visitor.Utils.XMLDATA_NAMESPACE;
+import static io.ballerina.xsd.core.visitor.Utils.convertToCamelCase;
+import static io.ballerina.xsd.core.visitor.Utils.isSimpleType;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.EMPTY_STRING;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.QUESTION_MARK;
 import static io.ballerina.xsd.core.visitor.XSDVisitorImpl.RECORD;
@@ -258,7 +259,7 @@ public class WsdlToBallerina {
     private void generateTypes(WsdlToBallerinaResponse response, Types types,
                                String outputDirectory) throws Exception {
         XSDVisitor xsdVisitor = new XSDVisitorImpl();
-        Map<String, ModuleMemberDeclarationNode> nodes = generateTypeNodes(types, xsdVisitor);
+        Map<String, MemberNode> nodes = generateTypeNodes(types, xsdVisitor);
         ModulePartNode typeNodes = generateModulePartNode(nodes, xsdVisitor);
         String typesFileName = outputDirectory.equals(EMPTY_STRING)
                 ? TYPES_FILE_NAME : outputDirectory + SLASH + TYPES_FILE_NAME;
@@ -387,10 +388,9 @@ public class WsdlToBallerina {
         return AbstractNodeFactory.createNodeList(importNodes);
     }
 
-    private Map<String, ModuleMemberDeclarationNode> generateTypeNodes(Types types,
-                                                                       XSDVisitor xsdVisitor) throws Exception {
+    private Map<String, MemberNode> generateTypeNodes(Types types, XSDVisitor xsdVisitor) throws Exception {
         List<?> extElements = types.getExtensibilityElements();
-        Map<String, ModuleMemberDeclarationNode> nodes = new LinkedHashMap<>();
+        Map<String, MemberNode> nodes = new LinkedHashMap<>();
         for (Object extElement : extElements) {
             if (!(extElement instanceof Schema)) {
                 continue;
@@ -403,7 +403,7 @@ public class WsdlToBallerina {
     }
 
     private static void generateTypeNode(XSDVisitor xsdVisitor, Schema schema,
-                                         Map<String, ModuleMemberDeclarationNode> nodes) throws Exception {
+                                         Map<String, MemberNode> nodes) throws Exception {
         Element schemaElement = schema.getElement();
         xsdVisitor.setTargetNamespace(schemaElement.getAttribute(TARGET_NAMESPACE));
         generateNodes(schemaElement, nodes, xsdVisitor);
