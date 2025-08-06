@@ -83,8 +83,10 @@ public final class Utils {
     public static void generateTypeDefinitions(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
                                                String requestType, String requestFieldName, String responseType,
                                                String responseFieldName, OperationContext operation) {
-        String requestBody = operation.requestBodyName() + WHITESPACE + BODY_FIELD;
-        String requestHeader = operation.requestHeaderName() + WHITESPACE + HEADER + QUESTION_MARK + SEMICOLON;
+        String requestBody = String.format(XMLDATA_NAMESPACE, SOAP, namespace) + LINE_BREAK +
+                operation.requestBodyName() + WHITESPACE + BODY_FIELD;
+        String requestHeader = String.format(XMLDATA_NAMESPACE, SOAP, namespace) + LINE_BREAK +
+                operation.requestHeaderName() + WHITESPACE + HEADER + QUESTION_MARK + SEMICOLON;
         generateTypeDefinition(namespace, nodes, operation.requestName(),
                    requestHeader + requestBody, true);
         generateTypeDefinition(namespace, nodes, operation.requestBodyName(), requestType +
