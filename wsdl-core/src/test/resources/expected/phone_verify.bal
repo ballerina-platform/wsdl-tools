@@ -36,6 +36,8 @@ public type CheckPhoneNumberPhoneVerifySoapRequestBody record {
 @xmldata:Name {value: "Envelope"}
 @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
 public type CheckPhoneNumberPhoneVerifySoapSoapRequest record {
+    @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
     CheckPhoneNumberPhoneVerifySoapHeader Header?;
+    @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
     CheckPhoneNumberPhoneVerifySoapRequestBody Body;
 };

@@ -36,6 +36,8 @@ public type CancelReservationBasicHttpBindingOTA2010AReservationService1RequestB
 @xmldata:Name {value: "Envelope"}
 @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
 public type CancelReservationBasicHttpBindingOTA2010AReservationService1SoapRequest record {
+    @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
     CancelReservationBasicHttpBindingOTA2010AReservationService1Header Header?;
+    @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
     CancelReservationBasicHttpBindingOTA2010AReservationService1RequestBody Body;
 };

@@ -36,6 +36,8 @@ public type MultiplyCalculatorSoap12RequestBody record {
 @xmldata:Name {value: "Envelope"}
 @xmldata:Namespace {prefix: "soap", uri: "http://www.w3.org/2003/05/soap-envelope"}
 public type MultiplyCalculatorSoap12SoapRequest record {
+    @xmldata:Namespace {prefix: "soap", uri: "http://www.w3.org/2003/05/soap-envelope"}
     MultiplyCalculatorSoap12Header Header?;
+    @xmldata:Namespace {prefix: "soap", uri: "http://www.w3.org/2003/05/soap-envelope"}
     MultiplyCalculatorSoap12RequestBody Body;
 };

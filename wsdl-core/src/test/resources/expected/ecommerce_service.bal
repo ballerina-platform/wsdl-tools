@@ -36,6 +36,8 @@ public type GetProductRequestBody record {
 @xmldata:Name {value: "Envelope"}
 @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
 public type GetProductSoapRequest record {
+    @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
     GetProductHeader Header?;
+    @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
     GetProductRequestBody Body;
 };

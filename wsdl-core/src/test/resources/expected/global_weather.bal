@@ -36,6 +36,8 @@ public type GetWeatherGlobalWeatherSoapRequestBody record {
 @xmldata:Name {value: "Envelope"}
 @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
 public type GetWeatherGlobalWeatherSoapSoapRequest record {
+    @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
     GetWeatherGlobalWeatherSoapHeader Header?;
+    @xmldata:Namespace {prefix: "soap", uri: "http://schemas.xmlsoap.org/soap/envelope/"}
     GetWeatherGlobalWeatherSoapRequestBody Body;
 };
