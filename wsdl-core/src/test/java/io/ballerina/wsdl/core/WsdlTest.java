@@ -178,4 +178,56 @@ public class WsdlTest {
                 "Message element is missing in the input of the operation: multiply";
         Assert.assertEquals(result.get(0).toString(), expectedError);
     }
+
+    @org.junit.jupiter.api.Test
+    void testOneWayOperation() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "one_way_operation.wsdl")), "", new String[]{"urn:ping"});
+        Assert.assertTrue(response.getDiagnostics().isEmpty(),
+                "One-way operation should not produce errors");
+        Assert.assertFalse(response.getClientSources().isEmpty(),
+                "Client source should be generated for one-way operation");
+        String clientContent = response.getClientSources().get(0).content();
+        Assert.assertTrue(clientContent.contains("sendOnly"),
+                "One-way operation should use sendOnly");
+        Assert.assertTrue(clientContent.contains("returns error?"),
+                "One-way operation should return error?");
+        Assert.assertFalse(clientContent.contains("sendReceive"),
+                "One-way operation should not use sendReceive");
+        Assert.assertFalse(clientContent.contains("SoapResponse"),
+                "One-way operation should not generate response types");
+    }
+
+    @org.junit.jupiter.api.Test
+    void testCombinedOneWayAndTwoWayOperations() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "combined_one_way_operation.wsdl")), "", new String[]{"urn:echo", "urn:ping"});
+        Assert.assertTrue(response.getDiagnostics().isEmpty(),
+                "Combined one-way and two-way operations should not produce errors");
+        Assert.assertFalse(response.getClientSources().isEmpty(),
+                "Client source should be generated");
+        String clientContent = response.getClientSources().get(0).content();
+        Assert.assertTrue(clientContent.contains("sendOnly"),
+                "One-way operation should use sendOnly");
+        Assert.assertTrue(clientContent.contains("sendReceive"),
+                "Two-way operation should use sendReceive");
+    }
+
+    @org.junit.jupiter.api.Test
+    void testCombinedWsdlWithTwoWayFilterOnly() throws Exception {
+        WsdlCmd wsdlCmd = new WsdlCmd();
+        WsdlToBallerinaResponse response = wsdlCmd.wsdlToBallerina(String.valueOf(RES_DIR.resolve(WSDL_DIR).resolve(
+                "combined_one_way_operation.wsdl")), "", new String[]{"urn:echo"});
+        Assert.assertTrue(response.getDiagnostics().isEmpty(),
+                "Filtering to two-way operation in WSDL with one-way ops should not produce errors");
+        Assert.assertFalse(response.getClientSources().isEmpty(),
+                "Client source should be generated");
+        String clientContent = response.getClientSources().get(0).content();
+        Assert.assertTrue(clientContent.contains("sendReceive"),
+                "Filtered two-way operation should use sendReceive");
+        Assert.assertFalse(clientContent.contains("sendOnly"),
+                "Filtered result should not contain one-way operation");
+    }
 }

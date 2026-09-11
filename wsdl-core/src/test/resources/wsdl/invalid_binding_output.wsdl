@@ -20,7 +20,7 @@
             <wsdl:output message="tns:DivideSoapOut"/>
         </wsdl:operation>
     </wsdl:portType>
-    <wsdl:binding name="CalculatorSoap12" >
+    <wsdl:binding name="CalculatorSoap12" type="tns:CalculatorSoap">
         <wsdl:operation name="Add">
             <soap12:operation soapAction="http://tempuri.org/Add" style="document"/>
             <wsdl:input>

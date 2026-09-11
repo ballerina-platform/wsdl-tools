@@ -36,6 +36,7 @@ public class WsdlOperation {
     private final String operationUri;
     private final String inputHeaderName;
     private final Map<String, HeaderPart> headerElements;
+    private final boolean oneWay;
 
     private WsdlOperation(Builder builder) {
         this.operationAction = builder.operationAction;
@@ -45,6 +46,7 @@ public class WsdlOperation {
         this.operationName = builder.operationName;
         this.headerElements = builder.headerElements;
         this.inputHeaderName = builder.inputHeaderName;
+        this.oneWay = builder.oneWay;
     }
 
     public String getOperationName() {
@@ -75,6 +77,10 @@ public class WsdlOperation {
         return inputHeaderName;
     }
 
+    public boolean isOneWay() {
+        return oneWay;
+    }
+
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -87,6 +93,7 @@ public class WsdlOperation {
         private String operationUri;
         private String inputHeaderName;
         private Map<String, HeaderPart> headerElements = new HashMap<>();
+        private boolean oneWay;
 
         public Builder(String operationName) {
             this.operationName = operationName;
@@ -100,6 +107,7 @@ public class WsdlOperation {
             this.operationUri = wsdlOperation.operationUri;
             this.headerElements = wsdlOperation.headerElements;
             this.inputHeaderName = wsdlOperation.inputHeaderName;
+            this.oneWay = wsdlOperation.oneWay;
         }
 
         public Builder setOperationName(String operationName) {
@@ -141,6 +149,11 @@ public class WsdlOperation {
 
         public Builder setInputHeaderName(String inputHeaderName) {
             this.inputHeaderName = inputHeaderName;
+            return this;
+        }
+
+        public Builder setOneWay(boolean oneWay) {
+            this.oneWay = oneWay;
             return this;
         }
 

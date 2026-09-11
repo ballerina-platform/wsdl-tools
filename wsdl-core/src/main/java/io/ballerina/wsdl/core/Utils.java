@@ -97,6 +97,19 @@ public final class Utils {
                                WHITESPACE + responseFieldName + QUESTION_MARK + SEMICOLON, false);
     }
 
+    public static void generateOneWayTypeDefinitions(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
+                                                    String requestType, String requestFieldName,
+                                                    OperationContext operation) {
+        String requestBody = String.format(XMLDATA_NAMESPACE, SOAP, namespace) + LINE_BREAK +
+                operation.requestBodyName() + WHITESPACE + BODY_FIELD;
+        String requestHeader = String.format(XMLDATA_NAMESPACE, SOAP, namespace) + LINE_BREAK +
+                operation.requestHeaderName() + WHITESPACE + HEADER + QUESTION_MARK + SEMICOLON;
+        generateTypeDefinition(namespace, nodes, operation.requestName(),
+                   requestHeader + requestBody, true);
+        generateTypeDefinition(namespace, nodes, operation.requestBodyName(), requestType +
+                               WHITESPACE + requestFieldName + QUESTION_MARK + SEMICOLON, false);
+    }
+
     private static void generateTypeDefinition(String namespace, Map<String, ModuleMemberDeclarationNode> nodes,
                                                String typeName, String bodyContent, boolean includeXmlData) {
         StringBuilder builder = new StringBuilder();
