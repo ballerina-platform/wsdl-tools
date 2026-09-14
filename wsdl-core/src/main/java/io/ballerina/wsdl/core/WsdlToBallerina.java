@@ -506,7 +506,7 @@ public class WsdlToBallerina {
         SchemaHandler.getInstance().initializeSchemas(targetNSToSchema);
     }
 
-    private Map<String, WsdlOperation> getWSDLOperations(Port soapPort) throws Exception {
+    private Map<String, WsdlOperation> getWSDLOperations(Port soapPort) {
         Map<String, WsdlOperation> wsdlOperations = new HashMap<>();
         for (Object op : soapPort.getBinding().getBindingOperations()) {
             BindingOperation bindingOperation = (BindingOperation) op;
@@ -545,9 +545,9 @@ public class WsdlToBallerina {
 
     public static String generateSOAPInputHeaderParts(BindingOperation bindingOperation,
                                                       Map<String, HeaderPart> partElements,
-                                                      SoapVersion soapVersion) throws Exception {
+                                                      SoapVersion soapVersion) {
         if (bindingOperation == null || bindingOperation.getBindingInput() == null) {
-            throw new Exception("Invalid binding operation: Binding input is null.");
+            throw new IllegalArgumentException("Invalid binding operation: Binding input is null.");
         }
         List<?> extensibilityElements = bindingOperation.getBindingInput().getExtensibilityElements();
         String headerMessageName = "";
