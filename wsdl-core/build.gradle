@@ -39,6 +39,7 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: "${junitVersion}"
     testImplementation group: 'org.testng', name: 'testng', version: "${testngVersion}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${junitEngineVersion}"
+    testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-launcher', version: "${junitPlatformLauncherVersion}"
     implementation "wsdl4j:wsdl4j:${wsdl4jVersion}"
     implementation "org.apache.ws.commons.schema:XmlSchema:${apacheXmlSchemaVersion}"
 }
@@ -72,7 +73,7 @@ spotbugsMain {
     def SpotBugsEffort = classLoader.findLoadedClass("com.github.spotbugs.snom.Effort")
     effort = SpotBugsEffort.MAX
     reportLevel = SpotBugsConfidence.LOW
-    reportsDir = file("$project.buildDir/reports/spotbugs")
+    reportsDir = layout.buildDirectory.dir("reports/spotbugs")
     reports {
         html.enabled true
         text.enabled = true
