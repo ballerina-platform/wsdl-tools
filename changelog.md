@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.3.1] - Unreleased
+## [v1.4.0] - Unreleased
 
 - Support for one-way operations ([#40](https://github.com/ballerina-platform/wsdl-tools/pull/40))
 
