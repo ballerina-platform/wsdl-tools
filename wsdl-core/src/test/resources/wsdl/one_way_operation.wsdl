@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                   xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                   xmlns:tns="http://example.org/oneway"
+                   targetNamespace="http://example.org/oneway">
+
+    <wsdl:types>
+        <xs:schema targetNamespace="http://example.org/oneway">
+            <xs:element name="pingRequest">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="message" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    </wsdl:types>
+
+    <wsdl:message name="pingRequest">
+        <wsdl:part name="parameters" element="tns:pingRequest"/>
+    </wsdl:message>
+
+    <wsdl:portType name="PingServicePortType">
+        <wsdl:operation name="ping">
+            <wsdl:input message="tns:pingRequest"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <wsdl:binding name="PingServiceSoap12Binding" type="tns:PingServicePortType">
+        <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <wsdl:operation name="ping">
+            <soap12:operation soapAction="urn:ping"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+        </wsdl:operation>
+    </wsdl:binding>
+
+    <wsdl:service name="PingService">
+        <wsdl:port name="PingServiceSoap12Port" binding="tns:PingServiceSoap12Binding">
+            <soap12:address location="https://localhost:9443/services/PingService"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>
