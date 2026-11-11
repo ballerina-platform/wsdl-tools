@@ -289,8 +289,9 @@ public class WsdlToBallerina {
                                                            Map<String, String> resolvedNameMeta) {
         Map<String, Header> headers = new HashMap<>();
         Map<String, HeaderPart> elementNames = operation.getHeaderElements();
-        for (String elementName : elementNames.keySet()) {
-            QName headerName = elementNames.get(elementName).messageName();
+        for (Map.Entry<String, HeaderPart> entry : elementNames.entrySet()) {
+            String elementName = entry.getKey();
+            QName headerName = entry.getValue().messageName();
             if (headerName == null) {
                 headerName = new QName(getWsdlDefinition().getTargetNamespace(), operation.getInputHeaderName());
             }
