@@ -289,9 +289,11 @@ public class WsdlToBallerina {
                                                            Map<String, String> resolvedNameMeta) {
         Map<String, Header> headers = new HashMap<>();
         Map<String, HeaderPart> elementNames = operation.getHeaderElements();
-        String localPart = operation.getInputHeaderName();
-        QName headerName = new QName(getWsdlDefinition().getTargetNamespace(), localPart);
         for (String elementName : elementNames.keySet()) {
+            QName headerName = elementNames.get(elementName).messageName();
+            if (headerName == null) {
+                headerName = new QName(getWsdlDefinition().getTargetNamespace(), operation.getInputHeaderName());
+            }
             Header header = extractHeader(getWsdlDefinition(), headerName, elementName, operation.getOperationName());
             headers.put(elementName, header);
         }
@@ -560,18 +562,20 @@ public class WsdlToBallerina {
                 if (partName == null) {
                     continue;
                 }
-                partElements.put(partName, new HeaderPart(partName, soap12Header.getNamespaceURI()));
                 Objects.requireNonNull(soap12Header.getMessage(),
                         "Message element is missing in the <soap:header> for \"" + partName + "\" element");
+                partElements.put(partName, new HeaderPart(partName, soap12Header.getNamespaceURI(),
+                        soap12Header.getMessage()));
                 headerMessageName = soap12Header.getMessage().getLocalPart();
             } else if (soapVersion.equals(SoapVersion.SOAP11) && element instanceof SOAPHeaderImpl soap11Header) {
                 String partName = soap11Header.getPart();
                 if (partName == null) {
                     continue;
                 }
-                partElements.put(partName, new HeaderPart(partName, soap11Header.getNamespaceURI()));
                 Objects.requireNonNull(soap11Header.getMessage(),
                         "Message element is missing in the <soap:header> for \"" + partName + "\" element");
+                partElements.put(partName, new HeaderPart(partName, soap11Header.getNamespaceURI(),
+                        soap11Header.getMessage()));
                 headerMessageName = soap11Header.getMessage().getLocalPart();
             }
         }

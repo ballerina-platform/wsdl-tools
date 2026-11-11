@@ -132,6 +132,23 @@ public class WsdlTest {
         Assert.assertEquals(result.get(0).toString(), expectedError);
     }
 
+    private static Stream<String> provideMultipleHeaderMessages() {
+        return Stream.of("multiple_header_messages_soap11.wsdl", "multiple_header_messages_soap12.wsdl");
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideMultipleHeaderMessages")
+    void testMultipleHeaderMessages(String fileName) throws Exception {
+        WsdlToBallerinaResponse response = new WsdlCmd().wsdlToBallerina(
+                RES_DIR.resolve(WSDL_DIR).resolve(fileName).toString(), "", new String[]{"urn:submit"});
+        Assert.assertTrue(response.getDiagnostics().isEmpty(), response.getDiagnostics().toString());
+        Assert.assertFalse(response.getClientSources().isEmpty());
+        String source = response.getClientSources().get(0).content();
+        Assert.assertTrue(source.contains("Session session?"), source);
+        Assert.assertTrue(source.contains("Link link?"), source);
+        Assert.assertTrue(source.contains("Security security?"), source);
+    }
+
     @org.junit.jupiter.api.Test
     void testInvalidHeaderError() throws Exception {
         WsdlCmd wsdlCmd = new WsdlCmd();
