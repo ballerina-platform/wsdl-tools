@@ -35,6 +35,7 @@ import io.ballerina.wsdl.core.generator.GeneratedSource;
 import io.ballerina.wsdl.core.handler.SchemaHandler;
 import io.ballerina.wsdl.core.handler.model.SoapVersion;
 import io.ballerina.wsdl.core.handler.model.WsdlOperation;
+import io.ballerina.xsd.core.XSDValidationException;
 import io.ballerina.xsd.core.node.MemberNode;
 import io.ballerina.xsd.core.visitor.XSDVisitor;
 import io.ballerina.xsd.core.visitor.XSDVisitorImpl;
@@ -61,7 +62,6 @@ import javax.wsdl.Part;
 import javax.wsdl.Port;
 import javax.wsdl.Service;
 import javax.wsdl.Types;
-import javax.wsdl.WSDLException;
 import javax.wsdl.extensions.schema.Schema;
 import javax.wsdl.extensions.soap.SOAPAddress;
 import javax.wsdl.extensions.soap.SOAPOperation;
@@ -224,10 +224,7 @@ public class WsdlToBallerina {
                 generateClient(response, outputDirectory, port, operations,
                                soapPorts.size() > 1 ? port.soapPort().getName() + UNDERSCORE : EMPTY_STRING);
             }
-        } catch (WSDLException e) {
-            DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaError(null);
-            diagnosticMessages.add(message);
-        } catch (Exception e) {
+        } catch (XSDValidationException | FormatterException | RuntimeException e) {
             DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaGeneralError(e, null);
             diagnosticMessages.add(message);
         }
@@ -256,7 +253,7 @@ public class WsdlToBallerina {
     }
 
     private void generateTypes(WsdlToBallerinaResponse response, Types types,
-                               String outputDirectory) throws Exception {
+                               String outputDirectory) throws XSDValidationException, FormatterException {
         XSDVisitor xsdVisitor = new XSDVisitorImpl();
         Map<String, MemberNode> nodes = generateTypeNodes(types, xsdVisitor);
         ModulePartNode typeNodes = generateModulePartNode(nodes, xsdVisitor);
@@ -397,7 +394,8 @@ public class WsdlToBallerina {
         return AbstractNodeFactory.createNodeList(importNodes);
     }
 
-    private Map<String, MemberNode> generateTypeNodes(Types types, XSDVisitor xsdVisitor) throws Exception {
+    private Map<String, MemberNode> generateTypeNodes(Types types, XSDVisitor xsdVisitor)
+            throws XSDValidationException {
         List<?> extElements = types.getExtensibilityElements();
         Map<String, MemberNode> nodes = new LinkedHashMap<>();
         for (Object extElement : extElements) {
@@ -412,7 +410,7 @@ public class WsdlToBallerina {
     }
 
     private static void generateTypeNode(XSDVisitor xsdVisitor, Schema schema,
-                                         Map<String, MemberNode> nodes) throws Exception {
+                                         Map<String, MemberNode> nodes) throws XSDValidationException {
         Element schemaElement = schema.getElement();
         xsdVisitor.setTargetNamespace(schemaElement.getAttribute(TARGET_NAMESPACE));
         generateNodes(schemaElement, nodes, xsdVisitor);
