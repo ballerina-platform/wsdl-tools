@@ -237,7 +237,7 @@ public class WsdlToBallerina {
     public static Header extractHeader(Definition wsdlDefinition, QName headerName, String elementName,
                                        String operationName) {
         Objects.requireNonNull(headerName, MISSING_HEADER_ELEMENT_ERROR);
-        Message message = (Message) wsdlDefinition.getMessages().get(headerName);
+        Message message = wsdlDefinition.getMessage(headerName);
         Objects.requireNonNull(message, MISSING_DATA_IN_HEADER_ERROR + headerName);
         Part partObj = (Part) message.getParts().get(elementName);
         Objects.requireNonNull(partObj, String.format(MISSING_PART_IN_HEADER_ERROR, operationName, elementName,
@@ -295,7 +295,8 @@ public class WsdlToBallerina {
             if (headerName == null) {
                 headerName = new QName(getWsdlDefinition().getTargetNamespace(), operation.getInputHeaderName());
             }
-            Header header = extractHeader(getWsdlDefinition(), headerName, elementName, operation.getOperationName());
+            Header header = extractHeader(getWsdlDefinition(), headerName, entry.getValue().typeName(),
+                    operation.getOperationName());
             headers.put(elementName, header);
         }
         StringBuilder stringBuilder = new StringBuilder();
@@ -565,7 +566,7 @@ public class WsdlToBallerina {
                 }
                 Objects.requireNonNull(soap12Header.getMessage(),
                         "Message element is missing in the <soap:header> for \"" + partName + "\" element");
-                partElements.put(partName, new HeaderPart(partName, soap12Header.getNamespaceURI(),
+                addHeaderPart(partElements, new HeaderPart(partName, soap12Header.getNamespaceURI(),
                         soap12Header.getMessage()));
                 headerMessageName = soap12Header.getMessage().getLocalPart();
             } else if (soapVersion.equals(SoapVersion.SOAP11) && element instanceof SOAPHeaderImpl soap11Header) {
@@ -575,12 +576,28 @@ public class WsdlToBallerina {
                 }
                 Objects.requireNonNull(soap11Header.getMessage(),
                         "Message element is missing in the <soap:header> for \"" + partName + "\" element");
-                partElements.put(partName, new HeaderPart(partName, soap11Header.getNamespaceURI(),
+                addHeaderPart(partElements, new HeaderPart(partName, soap11Header.getNamespaceURI(),
                         soap11Header.getMessage()));
                 headerMessageName = soap11Header.getMessage().getLocalPart();
             }
         }
         return headerMessageName;
+    }
+
+    /**
+     * Stores each message/part pair under a unique generated record field name.
+     * The original WSDL part name remains in HeaderPart for message lookup.
+     */
+    private static void addHeaderPart(Map<String, HeaderPart> partElements, HeaderPart headerPart) {
+        String fieldName = headerPart.typeName();
+        int suffix = 2;
+        while (partElements.containsKey(fieldName)) {
+            if (partElements.get(fieldName).equals(headerPart)) {
+                return;
+            }
+            fieldName = headerPart.typeName() + suffix++;
+        }
+        partElements.put(fieldName, headerPart);
     }
 
     private WsdlOperation getWsdlOperation(BindingOperation bindingOperation) {

@@ -30,6 +30,13 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
+import javax.wsdl.Definition;
+import javax.wsdl.Import;
+import javax.wsdl.Message;
+import javax.wsdl.Part;
+import javax.wsdl.factory.WSDLFactory;
+import javax.xml.namespace.QName;
+
 /**
  * A test class for validating WSDL functionalities.
  *
@@ -147,6 +154,50 @@ public class WsdlTest {
         Assert.assertTrue(source.contains("Session session?"), source);
         Assert.assertTrue(source.contains("Link link?"), source);
         Assert.assertTrue(source.contains("Security security?"), source);
+    }
+
+    private static Stream<String> provideDuplicateHeaderParts() {
+        return Stream.of("duplicate_header_parts_soap11.wsdl", "duplicate_header_parts_soap12.wsdl");
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideDuplicateHeaderParts")
+    void testDuplicateHeaderParts(String fileName) throws Exception {
+        WsdlToBallerinaResponse response = new WsdlCmd().wsdlToBallerina(
+                RES_DIR.resolve(WSDL_DIR).resolve(fileName).toString(), "", new String[]{"urn:submit"});
+        Assert.assertTrue(response.getDiagnostics().isEmpty(), response.getDiagnostics().toString());
+        Assert.assertFalse(response.getClientSources().isEmpty());
+        String source = response.getClientSources().get(0).content();
+        Assert.assertTrue(source.contains("Session header?"), source);
+        Assert.assertTrue(source.contains("Link header2?"), source);
+        Assert.assertTrue(source.contains("Security header3?"), source);
+        Assert.assertTrue(source.contains("@xmldata:Name {value: \"Session\"}"), source);
+        Assert.assertTrue(source.contains("@xmldata:Name {value: \"Link\"}"), source);
+        Assert.assertTrue(source.contains("@xmldata:Name {value: \"Security\"}"), source);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testImportedHeaderMessage() throws Exception {
+        WSDLFactory factory = WSDLFactory.newInstance();
+        Definition definition = factory.newDefinition();
+        definition.setTargetNamespace("urn:service");
+        Definition imported = factory.newDefinition();
+        imported.setTargetNamespace("urn:headers");
+        QName messageName = new QName("urn:headers", "SessionMessage");
+        Message message = imported.createMessage();
+        message.setQName(messageName);
+        Part part = imported.createPart();
+        part.setName("header");
+        part.setElementName(new QName("urn:headers", "Session"));
+        message.addPart(part);
+        imported.addMessage(message);
+        Import wsdlImport = definition.createImport();
+        wsdlImport.setNamespaceURI("urn:headers");
+        wsdlImport.setDefinition(imported);
+        definition.addImport(wsdlImport);
+        Header header = WsdlToBallerina.extractHeader(definition, messageName, "header", "Submit");
+        Assert.assertEquals(header.getElementName(), "Session");
+        Assert.assertEquals(header.getElementNamespace(), "urn:headers");
     }
 
     @org.junit.jupiter.api.Test
