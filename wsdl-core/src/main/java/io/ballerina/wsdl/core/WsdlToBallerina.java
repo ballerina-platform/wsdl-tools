@@ -35,6 +35,7 @@ import io.ballerina.wsdl.core.generator.GeneratedSource;
 import io.ballerina.wsdl.core.handler.SchemaHandler;
 import io.ballerina.wsdl.core.handler.model.SoapVersion;
 import io.ballerina.wsdl.core.handler.model.WsdlOperation;
+import io.ballerina.xsd.core.XSDValidationException;
 import io.ballerina.xsd.core.node.MemberNode;
 import io.ballerina.xsd.core.visitor.XSDVisitor;
 import io.ballerina.xsd.core.visitor.XSDVisitorImpl;
@@ -61,7 +62,6 @@ import javax.wsdl.Part;
 import javax.wsdl.Port;
 import javax.wsdl.Service;
 import javax.wsdl.Types;
-import javax.wsdl.WSDLException;
 import javax.wsdl.extensions.schema.Schema;
 import javax.wsdl.extensions.soap.SOAPAddress;
 import javax.wsdl.extensions.soap.SOAPOperation;
@@ -224,10 +224,7 @@ public class WsdlToBallerina {
                 generateClient(response, outputDirectory, port, operations,
                                soapPorts.size() > 1 ? port.soapPort().getName() + UNDERSCORE : EMPTY_STRING);
             }
-        } catch (WSDLException e) {
-            DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaError(null);
-            diagnosticMessages.add(message);
-        } catch (Exception e) {
+        } catch (XSDValidationException | FormatterException | RuntimeException e) {
             DiagnosticMessage message = DiagnosticMessage.wsdlToBallerinaGeneralError(e, null);
             diagnosticMessages.add(message);
         }
@@ -237,7 +234,7 @@ public class WsdlToBallerina {
     public static Header extractHeader(Definition wsdlDefinition, QName headerName, String elementName,
                                        String operationName) {
         Objects.requireNonNull(headerName, MISSING_HEADER_ELEMENT_ERROR);
-        Message message = (Message) wsdlDefinition.getMessages().get(headerName);
+        Message message = wsdlDefinition.getMessage(headerName);
         Objects.requireNonNull(message, MISSING_DATA_IN_HEADER_ERROR + headerName);
         Part partObj = (Part) message.getParts().get(elementName);
         Objects.requireNonNull(partObj, String.format(MISSING_PART_IN_HEADER_ERROR, operationName, elementName,
@@ -256,7 +253,7 @@ public class WsdlToBallerina {
     }
 
     private void generateTypes(WsdlToBallerinaResponse response, Types types,
-                               String outputDirectory) throws Exception {
+                               String outputDirectory) throws XSDValidationException, FormatterException {
         XSDVisitor xsdVisitor = new XSDVisitorImpl();
         Map<String, MemberNode> nodes = generateTypeNodes(types, xsdVisitor);
         ModulePartNode typeNodes = generateModulePartNode(nodes, xsdVisitor);
@@ -289,10 +286,14 @@ public class WsdlToBallerina {
                                                            Map<String, String> resolvedNameMeta) {
         Map<String, Header> headers = new HashMap<>();
         Map<String, HeaderPart> elementNames = operation.getHeaderElements();
-        String localPart = operation.getInputHeaderName();
-        QName headerName = new QName(getWsdlDefinition().getTargetNamespace(), localPart);
-        for (String elementName : elementNames.keySet()) {
-            Header header = extractHeader(getWsdlDefinition(), headerName, elementName, operation.getOperationName());
+        for (Map.Entry<String, HeaderPart> entry : elementNames.entrySet()) {
+            String elementName = entry.getKey();
+            QName headerName = entry.getValue().messageName();
+            if (headerName == null) {
+                headerName = new QName(getWsdlDefinition().getTargetNamespace(), operation.getInputHeaderName());
+            }
+            Header header = extractHeader(getWsdlDefinition(), headerName, entry.getValue().typeName(),
+                    operation.getOperationName());
             headers.put(elementName, header);
         }
         StringBuilder stringBuilder = new StringBuilder();
@@ -393,7 +394,8 @@ public class WsdlToBallerina {
         return AbstractNodeFactory.createNodeList(importNodes);
     }
 
-    private Map<String, MemberNode> generateTypeNodes(Types types, XSDVisitor xsdVisitor) throws Exception {
+    private Map<String, MemberNode> generateTypeNodes(Types types, XSDVisitor xsdVisitor)
+            throws XSDValidationException {
         List<?> extElements = types.getExtensibilityElements();
         Map<String, MemberNode> nodes = new LinkedHashMap<>();
         for (Object extElement : extElements) {
@@ -408,7 +410,7 @@ public class WsdlToBallerina {
     }
 
     private static void generateTypeNode(XSDVisitor xsdVisitor, Schema schema,
-                                         Map<String, MemberNode> nodes) throws Exception {
+                                         Map<String, MemberNode> nodes) throws XSDValidationException {
         Element schemaElement = schema.getElement();
         xsdVisitor.setTargetNamespace(schemaElement.getAttribute(TARGET_NAMESPACE));
         generateNodes(schemaElement, nodes, xsdVisitor);
@@ -560,22 +562,40 @@ public class WsdlToBallerina {
                 if (partName == null) {
                     continue;
                 }
-                partElements.put(partName, new HeaderPart(partName, soap12Header.getNamespaceURI()));
                 Objects.requireNonNull(soap12Header.getMessage(),
                         "Message element is missing in the <soap:header> for \"" + partName + "\" element");
+                addHeaderPart(partElements, new HeaderPart(partName, soap12Header.getNamespaceURI(),
+                        soap12Header.getMessage()));
                 headerMessageName = soap12Header.getMessage().getLocalPart();
             } else if (soapVersion.equals(SoapVersion.SOAP11) && element instanceof SOAPHeaderImpl soap11Header) {
                 String partName = soap11Header.getPart();
                 if (partName == null) {
                     continue;
                 }
-                partElements.put(partName, new HeaderPart(partName, soap11Header.getNamespaceURI()));
                 Objects.requireNonNull(soap11Header.getMessage(),
                         "Message element is missing in the <soap:header> for \"" + partName + "\" element");
+                addHeaderPart(partElements, new HeaderPart(partName, soap11Header.getNamespaceURI(),
+                        soap11Header.getMessage()));
                 headerMessageName = soap11Header.getMessage().getLocalPart();
             }
         }
         return headerMessageName;
+    }
+
+    /**
+     * Stores each message/part pair under a unique generated record field name.
+     * The original WSDL part name remains in HeaderPart for message lookup.
+     */
+    private static void addHeaderPart(Map<String, HeaderPart> partElements, HeaderPart headerPart) {
+        String fieldName = headerPart.typeName();
+        int suffix = 2;
+        while (partElements.containsKey(fieldName)) {
+            if (partElements.get(fieldName).equals(headerPart)) {
+                return;
+            }
+            fieldName = headerPart.typeName() + suffix++;
+        }
+        partElements.put(fieldName, headerPart);
     }
 
     private WsdlOperation getWsdlOperation(BindingOperation bindingOperation) {

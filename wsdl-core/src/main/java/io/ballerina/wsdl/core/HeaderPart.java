@@ -18,12 +18,19 @@
 
 package io.ballerina.wsdl.core;
 
+import javax.xml.namespace.QName;
+
 /**
  * Represents a WSDL header part with a type name and a namespace.
  *
- * @param typeName   The name of the type of the header part.
- * @param namespace  The namespace URI of the header part.
+ * @param typeName    The name of the type of the header part.
+ * @param namespace   The namespace URI of the header part.
+ * @param messageName The qualified name of the message declaring the part.
  * @since 1.0.0
  */
-public record HeaderPart(String typeName, String namespace) {
+public record HeaderPart(String typeName, String namespace, QName messageName) {
+
+    public HeaderPart(String typeName, String namespace) {
+        this(typeName, namespace, null);
+    }
 }

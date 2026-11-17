@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:tns="urn:multi-header" targetNamespace="urn:multi-header">
+  <wsdl:types>
+    <xs:schema targetNamespace="urn:multi-header" elementFormDefault="qualified">
+      <xs:element name="Request"><xs:complexType><xs:sequence>
+        <xs:element name="value" type="xs:string"/>
+      </xs:sequence></xs:complexType></xs:element>
+      <xs:element name="Response"><xs:complexType><xs:sequence>
+        <xs:element name="value" type="xs:string"/>
+      </xs:sequence></xs:complexType></xs:element>
+      <xs:element name="Session"><xs:complexType><xs:sequence>
+        <xs:element name="value" type="xs:string"/>
+      </xs:sequence></xs:complexType></xs:element>
+      <xs:element name="Link"><xs:complexType><xs:sequence>
+        <xs:element name="value" type="xs:string"/>
+      </xs:sequence></xs:complexType></xs:element>
+      <xs:element name="Security"><xs:complexType><xs:sequence>
+        <xs:element name="value" type="xs:string"/>
+      </xs:sequence></xs:complexType></xs:element>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="Input"><wsdl:part name="payload" element="tns:Request"/></wsdl:message>
+  <wsdl:message name="Output"><wsdl:part name="payload" element="tns:Response"/></wsdl:message>
+  <wsdl:message name="SessionMessage"><wsdl:part name="session" element="tns:Session"/></wsdl:message>
+  <wsdl:message name="LinkMessage"><wsdl:part name="link" element="tns:Link"/></wsdl:message>
+  <wsdl:message name="SecurityMessage"><wsdl:part name="security" element="tns:Security"/></wsdl:message>
+  <wsdl:portType name="ServicePortType">
+    <wsdl:operation name="Submit">
+      <wsdl:input message="tns:Input"/><wsdl:output message="tns:Output"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="ServiceBinding" type="tns:ServicePortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="Submit">
+      <soap:operation soapAction="urn:submit"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+        <soap:header message="tns:SessionMessage" part="session" use="literal"/>
+        <soap:header message="tns:LinkMessage" part="link" use="literal"/>
+        <soap:header message="tns:SecurityMessage" part="security" use="literal"/>
+      </wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Service">
+    <wsdl:port name="ServicePort" binding="tns:ServiceBinding">
+      <soap:address location="http://localhost:8080/service"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
