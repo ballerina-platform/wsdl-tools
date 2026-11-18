@@ -36,6 +36,8 @@ public class WsdlOperation {
     private final String operationUri;
     private final String inputHeaderName;
     private final Map<String, HeaderPart> headerElements;
+    private final boolean inOnly;
+    private final boolean robustInOnly;
 
     private WsdlOperation(Builder builder) {
         this.operationAction = builder.operationAction;
@@ -45,6 +47,8 @@ public class WsdlOperation {
         this.operationName = builder.operationName;
         this.headerElements = builder.headerElements;
         this.inputHeaderName = builder.inputHeaderName;
+        this.inOnly = builder.inOnly;
+        this.robustInOnly = builder.robustInOnly;
     }
 
     public String getOperationName() {
@@ -75,6 +79,14 @@ public class WsdlOperation {
         return inputHeaderName;
     }
 
+    public boolean isInOnly() {
+        return inOnly;
+    }
+
+    public boolean isRobustInOnly() {
+        return robustInOnly;
+    }
+
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -87,6 +99,8 @@ public class WsdlOperation {
         private String operationUri;
         private String inputHeaderName;
         private Map<String, HeaderPart> headerElements = new HashMap<>();
+        private boolean inOnly;
+        private boolean robustInOnly;
 
         public Builder(String operationName) {
             this.operationName = operationName;
@@ -100,6 +114,8 @@ public class WsdlOperation {
             this.operationUri = wsdlOperation.operationUri;
             this.headerElements = wsdlOperation.headerElements;
             this.inputHeaderName = wsdlOperation.inputHeaderName;
+            this.inOnly = wsdlOperation.inOnly;
+            this.robustInOnly = wsdlOperation.robustInOnly;
         }
 
         public Builder setOperationName(String operationName) {
@@ -141,6 +157,16 @@ public class WsdlOperation {
 
         public Builder setInputHeaderName(String inputHeaderName) {
             this.inputHeaderName = inputHeaderName;
+            return this;
+        }
+
+        public Builder setInOnly(boolean inOnly) {
+            this.inOnly = inOnly;
+            return this;
+        }
+
+        public Builder setRobustInOnly(boolean robustInOnly) {
+            this.robustInOnly = robustInOnly;
             return this;
         }
 
